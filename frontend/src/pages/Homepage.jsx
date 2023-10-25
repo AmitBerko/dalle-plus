@@ -7,7 +7,7 @@ function Homepage() {
 	const [prompt, setPrompt] = useState('')
 
       useEffect(() => {
-				const eventSource = new EventSource('https://amit-flask-app-fd7c608866ab.herokuapp.com/sse')
+				const eventSource = new EventSource('super-dalle3.web.app/sse')
 				eventSource.onmessage = (event) => {
 					const data = JSON.parse(event.data)
 					setUrlArray((prevUrlArray) => [...prevUrlArray, ...data.links])
@@ -21,7 +21,7 @@ function Homepage() {
     const handleGenerate = () => {
       setUrlArray([])
 			axios
-				.post('https://amit-flask-app-fd7c608866ab.herokuapp.com/generate-images', { prompt })
+				.post('super-dalle3.web.app/generate-images', { prompt })
 				.then(() => {
 					console.log('Image generation started')
 				})
