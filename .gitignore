@@ -1,0 +1,5 @@
+.firebase
+backend/venv
+functions/venv
+frontend/build
+node_modules
