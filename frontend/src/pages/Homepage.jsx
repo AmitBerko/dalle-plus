@@ -3,11 +3,12 @@ import axios from 'axios'
 
 function Homepage() {
 	const [urlArray, setUrlArray] = useState([])
-
 	const [prompt, setPrompt] = useState('')
 
+  const apiServer = 'http://127.0.0.1:8080'
+
       useEffect(() => {
-				const eventSource = new EventSource('https://amit-flask-app-fd7c608866ab.herokuapp.com/sse')
+				const eventSource = new EventSource(`${apiServer}/sse`)
 				eventSource.onmessage = (event) => {
 					const data = JSON.parse(event.data)
 					setUrlArray((prevUrlArray) => [...prevUrlArray, ...data.links])
@@ -21,7 +22,7 @@ function Homepage() {
     const handleGenerate = () => {
       setUrlArray([])
 			axios
-				.post('https://amit-flask-app-fd7c608866ab.herokuapp.com/generate-images', { prompt })
+				.post(`${apiServer}/generate-images`, { prompt })
 				.then(() => {
 					console.log('Image generation started')
 				})
