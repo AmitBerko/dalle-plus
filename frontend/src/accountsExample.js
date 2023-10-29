@@ -8,6 +8,6 @@ const accounts = [
   // Add more accounts as needed
 ]
 
-const apiServer = 'http://<Your api server ip>'
+const apiServers = ['http://<Your api server ip>'] // Add more if needed 
 
-module.exports = { accounts, apiServer }
+module.exports = { accounts, apiServers }
