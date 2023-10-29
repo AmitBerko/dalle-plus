@@ -1,19 +1,22 @@
 import React, { useState } from 'react'
 import axios from 'axios'
-import { accounts, apiServer } from '../accounts'
+import { accounts, apiServers } from '../accounts'
 
 function Homepage() {
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 
+  let curApiServer
 	    const handleGenerate = () => {
 				if (!prompt) return
 				setUrlArray([])
-				accounts.forEach((account) => {
+				accounts.forEach((account, index) => {
+          curApiServer = apiServers[index % apiServers.length]
+          console.log(`sending request from ${account.auth_cookie.slice(0, 5)} to ${curApiServer}`)
 					axios
-						.post(`${apiServer}/generate-images`, { prompt, account })
+						.post(`${curApiServer}/generate-images`, { prompt, account })
 						.then((response) => {
-							console.log(`Image generation started for ${account.auth_cookie.slice(0, 5)}`)
+							console.log(`Image generation finished for ${account.auth_cookie.slice(0, 5)}`)
               let newUrls = response.data[account.auth_cookie]
               console.log(newUrls)
               if (!newUrls || newUrls === undefined) {
