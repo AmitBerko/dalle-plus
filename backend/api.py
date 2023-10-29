@@ -4,7 +4,7 @@ from flask_cors import CORS, cross_origin
 from BingImageCreator import ImageGen
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "*"}}, allow_headers=["Content-Type"], supports_credentials=True, intercept_exceptions=False)
+CORS(app, resources={r"/api/*": {"origins": "https://super-dalle-3.web.app"}}, allow_headers=["Content-Type"], supports_credentials=True, intercept_exceptions=False)
 results = {}
 
 @app.route('/generate-images', methods=['POST'])
