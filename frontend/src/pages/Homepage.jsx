@@ -1,126 +1,77 @@
 import React, { useState } from 'react'
 import axios from 'axios'
 import { accounts, apiServers } from '../accounts'
+import { db } from '../index'
+import { ref, set, onValue, push, update, query, equalTo, orderByChild } from 'firebase/database'
 
 function Homepage() {
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
+	const [brokenAccounts, setBrokenAccounts] = useState(['test'])
+	const [isGenerating, setIsGenerating] = useState([]) // Prevents letting an account generate more than once at a time
+	const accountsRef = ref(db, 'accounts')
 
-  let curApiServer
-	    const handleGenerate = () => {
-				if (!prompt) return
-				setUrlArray([])
-				accounts.forEach((account, index) => {
-          curApiServer = apiServers[index % apiServers.length]
-          console.log(`sending request from ${account.auth_cookie.slice(0, 5)} to ${curApiServer}`)
-					axios
-						.post(`${curApiServer}/generate-images`, { prompt, account })
-						.then((response) => {
-							console.log(`Image generation finished for ${account.auth_cookie.slice(0, 5)}`)
-              let newUrls = response.data[account.auth_cookie]
-              console.log(newUrls)
-              if (!newUrls || newUrls === undefined) {
-                console.log('returning - going outside the function')
-                return
-              }
-								setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
-						})
-						.catch((error) => {
-							console.error(`Error for ${account.auth_cookie.slice(0, 5)}: ${error}`)
-						})
-				})
+	let curApiServer
+	const handleGenerate = () => {
+		if (!prompt) return
+		setUrlArray([])
+		for (let index = 0; index < accounts.length; index++) {
+			const account = accounts[index]
+
+			if (isGenerating[account.auth_cookie.slice(0, 5)]) {
+				console.log(`${account.auth_cookie.slice(0, 5)} is still generating. skipping it`)
+				continue // Skip this iteration if the account is already generating
 			}
 
-			// useEffect(() => {
-			// 	const eventSource = new EventSource(`${apiServer}/sse`)
+			// isGenerating[account.auth_cookie] = true
+			setIsGenerating((prev) => ({ ...prev, [account.auth_cookie.slice(0, 5)]: true }))
+			curApiServer = apiServers[index % apiServers.length]
+			console.log(`sending request from ${account.auth_cookie.slice(0, 5)} to ${curApiServer}`)
+			axios
+				.post(`${curApiServer}/generate-images`, { prompt, account })
+				.then((response) => {
+					// isGenerating[account.auth_cookie] = false
+					setIsGenerating((prev) => ({ ...prev, [account.auth_cookie.slice(0, 5)]: false }))
+					let newUrls = response.data[account.auth_cookie]
+					console.log(`${account.auth_cookie.slice(0, 5)} generated ${[newUrls]}`)
+					if (newUrls.length === 0) {
+						// Delete this after
+						setBrokenAccounts((prev) => [...prev, account.auth_cookie.slice(0, 5)])
+					}
+					// console.log(newUrls)
+					if (!newUrls || newUrls === undefined) {
+						console.log('returning - going outside the function')
+						return
+					}
+					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
+				})
+				.catch((error) => {
+					console.error(`Error for ${account.auth_cookie.slice(0, 5)}: ${error}`)
+				})
+		}
+	}
 
-			// 	eventSource.onmessage = (event) => {
-			// 		const data = JSON.parse(event.data)
-			// 		if (data.links && data.links.length > 0) {
-			// 			setUrlArray((prevUrlArray) => {
-			// 				// Use a Set to ensure uniqueness
-			// 				const uniqueUrls = new Set([...prevUrlArray, ...data.links])
-			// 				return Array.from(uniqueUrls)
-			// 			})
-			// 		} else {
-			// 			console.error('data.links is not iterable:', data.links)
-			// 		}
-			// 	}
+	function updateAccount(authCookie, isGenerating) {
+		// Define the account data
+		const newAccountData = {
+			isGenerating: isGenerating,
+		}
 
-			// 	return () => {
-			// 		eventSource.close()
-			// 	}
-			// }, [])
+		const newAccountRef = ref(db, 'accounts/' + authCookie)
+		set(newAccountRef, newAccountData)
+	}
 
-	// const socket = io('http://127.0.0.1:8080', {
-	// 	transports: ['websocket'], // Specify the transport
-	// 	upgrade: false, // Set upgrade to false to prevent WebSocket issues
-	// 	reconnection: true, // Enable reconnection if the connection is dropped
-	// })
-	//////////////
-	// const [urlArray, setUrlArray] = useState([])
-	// const [prompt, setPrompt] = useState('')
-
-	// const socket = io('127.0.0.1:8080', {
-	// 	transports: ['websocket'],
-	// 	upgrade: false,
-	// 	reconnection: true,
-	// 	readyState: 1,
-	// })
-
-	// useEffect(() => {
-	// 	const handleImageUrls = (data) => {
-	// 		console.log(data)
-	// 		setUrlArray((prevUrlsArray) => [...prevUrlsArray, ...data.links])
-	// 	}
-
-	// 	socket.on('image_urls', handleImageUrls)
-
-	// 	return () => {
-	// 		socket.off('image_urls', handleImageUrls)
-	// 	}
-	// }, [socket])
-
-	// const handleGenerate = () => {
-	// 	if (prompt === '' || prompt === undefined) return
-
-	// 	setUrlArray([])
-	// 	socket.emit('generate-images', { prompt })
-
-	// 	// Close the socket here
-	// 	socket.disconnect()
-	// }
-
-	// const [urlArray, setUrlArray] = useState([])
-	// const [prompt, setPrompt] = useState('')
-
-	// const handleGenerate = async () => {
-	// 	if (prompt === '' || prompt === undefined) return
-
-	// 	// Clear the current URLs
-	// 	setUrlArray([])
-
-	// 	try {
-	// 		// Send a request to the server to generate images using Axios
-	// 		const response = await axios.get(`http://127.0.0.1:8080/get-images`, {
-	// 			params: { prompt }, // Pass the prompt as a query parameter
-	// 		})
-
-	// 		if (response.status === 200) {
-	// 			const data = response.data
-	// 			console.log('Received data from server:', data)
-
-	// 			if (data && data.links) {
-	// 				console.log('Updating urlArray with', data.links)
-	// 				setUrlArray(data.links)
-	// 			}
-	// 		} else {
-	// 			console.error('Failed to retrieve images')
-	// 		}
-	// 	} catch (error) {
-	// 		console.error('An error occurred while fetching images:', error)
-	// 	}
-	// }
+	function getIsGenerating(authCookie) {
+		const queryRef = query(ref(db, `accounts/${authCookie}`))
+		onValue(queryRef, (snapshot) => {
+			if (!snapshot.exists()) {
+				console.log('Snapshot doesnt exist')
+				return
+			}
+			console.log(snapshot.val().isGenerating) // good
+      return snapshot.val().isGenerating
+		})
+	}
 
 	return (
 		<>
@@ -144,7 +95,7 @@ function Homepage() {
 									value={prompt}
 									onChange={(event) => setPrompt(event.target.value)}
 									className="form-control fs-6 d-sm-none"
-									rows="3"
+									rows="4"
 								></textarea>
 								<button onClick={handleGenerate} className="btn btn-primary btn-lg d-none d-sm-inline">
 									Generate
@@ -159,6 +110,8 @@ function Homepage() {
 					</div>
 				</div>
 			</section>
+			<div>{brokenAccounts}</div>
+			<div>{Object.entries(isGenerating)}</div>
 
 			{/* Result images section */}
 			<section>
@@ -180,6 +133,8 @@ function Homepage() {
 					</div>
 				</div>
 			</section>
+			<button onClick={() => updateAccount('gilbasim', false)}>add account</button>
+			<button onClick={() => getIsGenerating('gilbasimtest')}>test</button>
 		</>
 	)
 }
