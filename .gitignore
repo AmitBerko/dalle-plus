@@ -5,3 +5,4 @@ frontend/build
 node_modules
 __pycache__
 accounts.js
+firebaseConfig.js
