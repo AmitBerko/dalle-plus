@@ -1,7 +1,45 @@
-.generated-image {
-  max-width: 325px;
-}
-
 textarea {
   resize: none;
+}
+
+@media (min-width: 275px) {
+  .generated-image {
+    max-width: 135px;
+  }
+}
+
+@media (min-width: 340px) {
+  .generated-image {
+    max-width: 165px;
+  }
+}
+
+@media (min-width: 430px) {
+  .generated-image {
+    max-width: 210px;
+  }
+}
+
+@media (min-width: 576px) {
+  .generated-image {
+    max-width: 280px;
+  }
+}
+
+@media (min-width: 768px) {
+
+}
+
+@media (min-width: 992px) {
+
+}
+
+@media (min-width: 1200px) {
+  .generated-image {
+    max-width: 330px;
+  }
+}
+
+@media (min-width: 1400px) {
+
 }
