@@ -1,44 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { accounts, apiServers } from '../accounts'
 import { db } from '../index'
-import { ref, set, onValue, push, update, query, equalTo, orderByChild } from 'firebase/database'
+import { ref, set, onValue, query } from 'firebase/database'
 
 function Homepage() {
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
-	const [brokenAccounts, setBrokenAccounts] = useState(['test'])
-	const [isGenerating, setIsGenerating] = useState([]) // Prevents letting an account generate more than once at a time
-	const accountsRef = ref(db, 'accounts')
+	const [generatingCount, setGeneratingCount] = useState(0)
+  const [generationFlag, setGenerationFlag] = useState(false)
+
+	useEffect(() => {
+		window.addEventListener('beforeunload', handleUnload)
+
+		return () => {
+			window.removeEventListener('beforeunload', handleUnload)
+		}
+	}, [])
 
 	let curApiServer
 	const handleGenerate = () => {
 		if (!prompt) return
 		setUrlArray([])
 		for (let index = 0; index < accounts.length; index++) {
-			const account = accounts[index]
+			const account = accounts[index] // Get the account
 
-			if (isGenerating[account.auth_cookie.slice(0, 5)]) {
+			if (getIsGenerating(account.auth_cookie)) {
 				console.log(`${account.auth_cookie.slice(0, 5)} is still generating. skipping it`)
 				continue // Skip this iteration if the account is already generating
 			}
 
-			// isGenerating[account.auth_cookie] = true
-			setIsGenerating((prev) => ({ ...prev, [account.auth_cookie.slice(0, 5)]: true }))
+			updateAccount(account.auth_cookie, true) // Set "isGenerating" to true for that account
+			setGeneratingCount((prev) => prev + 1)
 			curApiServer = apiServers[index % apiServers.length]
 			console.log(`sending request from ${account.auth_cookie.slice(0, 5)} to ${curApiServer}`)
 			axios
 				.post(`${curApiServer}/generate-images`, { prompt, account })
 				.then((response) => {
-					// isGenerating[account.auth_cookie] = false
-					setIsGenerating((prev) => ({ ...prev, [account.auth_cookie.slice(0, 5)]: false }))
+					updateAccount(account.auth_cookie, false)
+					setGeneratingCount((prev) => prev - 1)
 					let newUrls = response.data[account.auth_cookie]
 					console.log(`${account.auth_cookie.slice(0, 5)} generated ${[newUrls]}`)
-					if (newUrls.length === 0) {
-						// Delete this after
-						setBrokenAccounts((prev) => [...prev, account.auth_cookie.slice(0, 5)])
-					}
-					// console.log(newUrls)
+
 					if (!newUrls || newUrls === undefined) {
 						console.log('returning - going outside the function')
 						return
@@ -46,6 +49,8 @@ function Homepage() {
 					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
 				})
 				.catch((error) => {
+					updateAccount(account.auth_cookie, false)
+					setGeneratingCount((prev) => prev - 1)
 					console.error(`Error for ${account.auth_cookie.slice(0, 5)}: ${error}`)
 				})
 		}
@@ -69,15 +74,40 @@ function Homepage() {
 				return
 			}
 			console.log(snapshot.val().isGenerating) // good
-      return snapshot.val().isGenerating
+			return snapshot.val().isGenerating
 		})
 	}
+
+	// Set all accounts' isGenerating to false when exiting a page
+	function handleUnload() {
+		accounts.forEach((account) => {
+			updateAccount(account.auth_cookie, false)
+		})
+	}
+
+  // TESTING!
+	// Use a while loop to wait for all generations to complete
+	useEffect(() => {
+		const waitForGenerationsToComplete = async () => {
+			while (generatingCount > 0) {
+				// Wait for ongoing generations
+				await new Promise((resolve) => setTimeout(resolve, 8000)) // Wait for 1 second
+			}
+
+			// All generations are completed, you can stop here or perform additional tasks
+			setGenerationFlag(false)
+		}
+
+		if (generationFlag) {
+			waitForGenerationsToComplete()
+		}
+	}, [generatingCount, generationFlag])
 
 	return (
 		<>
 			{/* Title and prompt section */}
 			<section className="p-3 p-lg-4 px-lg-5">
-				<h1 className="text-center mb-3 display-5 fw-bold">Image Creator</h1>
+				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Super Dalle-3</h1>
 				<div className="container-fluid">
 					<div className="row">
 						<div className="col-12">
@@ -108,23 +138,23 @@ function Homepage() {
 							</button>
 						</div>
 					</div>
+					<div>
+						Accounts generating: {generatingCount} / {accounts.length}
+					</div>
 				</div>
 			</section>
-			<div>{brokenAccounts}</div>
-			<div>{Object.entries(isGenerating)}</div>
 
 			{/* Result images section */}
 			<section>
 				<div className="container-fluid px-2 px-md-5">
-					<div className="row d-flex justify-content-center p">
+					<div className="row justify-content-center">
 						{urlArray.map((url, index) => {
-							// Try maybe to use <a> instead
 							return (
 								<img
 									key={index}
 									src={url}
 									alt={url}
-									className="img-fluid generated-image px-3 mb-3 p-sm-2 mb-sm-0"
+									className="img-fluid generated-image p-2 m-0"
 									onClick={() => window.open(url, '_blank')}
 									style={{ cursor: 'pointer' }}
 								/>
