@@ -4,7 +4,17 @@ from flask_cors import CORS, cross_origin
 from BingImageCreator import ImageGen
 
 app = Flask(__name__)
-CORS(app, resources={r"/api/*": {"origins": "https://super-dalle-3.web.app"}}, allow_headers=["Content-Type"], supports_credentials=True, intercept_exceptions=False)
+
+CORS(
+    app,
+    resources={
+        r"/*": {"origins": ["https://super-dalle-3.web.app", "http://localhost:3000"]}
+    },
+    allow_headers=["Content-Type"],
+    supports_credentials=True,
+    intercept_exceptions=False
+)
+
 results = {}
 
 @app.route('/generate-images', methods=['POST'])
@@ -13,12 +23,11 @@ def generate_images():
     data = request.json
     prompt = data.get('prompt')
     account = data.get('account')
-    # print(f"prompt is {prompt} and account is {account}")
     if not prompt or not account:
         return 'Invalid request data', 400
 
     generate_images_for_account(account, prompt)
-    # print(f"account is {account} and results is {results}")
+    print(f"account is {account['auth_cookie'][:5]} and results is {results}")
     return results
 
 def generate_images_for_account(account, prompt):
@@ -29,7 +38,7 @@ def generate_images_for_account(account, prompt):
         results[account['auth_cookie']] = links
     except Exception as e:
         # print(f'Account {account["auth_cookie"][:5]} crashed: {str(e)}')
-        print(f'{account[:5]} crashed')
+        print(f'{account['auth_cookie'][:5]} crashed due to: {str(e)[:50]}')
 
 @app.route('/')
 def test():
@@ -50,10 +59,10 @@ if __name__ == '__main__':
 # import concurrent.futures
 
 # # Configure Flask to log all requests
-# app = Flask(__name__)
+# app = Flask(_name_)
 # socketio = SocketIO(app, cors_allowed_origins="*")
 
-# CORS(app, resources={r"/api/*": {"origins": "*"}}, allow_headers=["Content-Type"], supports_credentials=True, intercept_exceptions=False)
+# CORS(app, resources={r"/api/": {"origins": ""}}, allow_headers=["Content-Type"], supports_credentials=True, intercept_exceptions=False)
 
 # results = {}
 
@@ -98,5 +107,5 @@ if __name__ == '__main__':
 
 #     return all_links
 
-# if __name__ == '__main__':
+# if _name_ == '_main_':
 #     app.run(host='0.0.0.0', port=8080, debug=True)

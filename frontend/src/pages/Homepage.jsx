@@ -8,7 +8,7 @@ function Homepage() {
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
-  const [generationFlag, setGenerationFlag] = useState(false)
+	const [newAccount, setNewAccount] = useState('')
 
 	useEffect(() => {
 		window.addEventListener('beforeunload', handleUnload)
@@ -24,7 +24,6 @@ function Homepage() {
 		setUrlArray([])
 		for (let index = 0; index < accounts.length; index++) {
 			const account = accounts[index] // Get the account
-
 			if (getIsGenerating(account.auth_cookie)) {
 				console.log(`${account.auth_cookie.slice(0, 5)} is still generating. skipping it`)
 				continue // Skip this iteration if the account is already generating
@@ -57,6 +56,7 @@ function Homepage() {
 	}
 
 	function updateAccount(authCookie, isGenerating) {
+		if (authCookie === undefined || authCookie === '') return
 		// Define the account data
 		const newAccountData = {
 			isGenerating: isGenerating,
@@ -68,14 +68,15 @@ function Homepage() {
 
 	function getIsGenerating(authCookie) {
 		const queryRef = query(ref(db, `accounts/${authCookie}`))
+    let generating
 		onValue(queryRef, (snapshot) => {
 			if (!snapshot.exists()) {
 				console.log('Snapshot doesnt exist')
 				return
 			}
-			console.log(snapshot.val().isGenerating) // good
-			return snapshot.val().isGenerating
+      generating = snapshot.val().isGenerating
 		})
+    return generating
 	}
 
 	// Set all accounts' isGenerating to false when exiting a page
@@ -85,28 +86,10 @@ function Homepage() {
 		})
 	}
 
-  // TESTING!
-	// Use a while loop to wait for all generations to complete
-	useEffect(() => {
-		const waitForGenerationsToComplete = async () => {
-			while (generatingCount > 0) {
-				// Wait for ongoing generations
-				await new Promise((resolve) => setTimeout(resolve, 8000)) // Wait for 1 second
-			}
-
-			// All generations are completed, you can stop here or perform additional tasks
-			setGenerationFlag(false)
-		}
-
-		if (generationFlag) {
-			waitForGenerationsToComplete()
-		}
-	}, [generatingCount, generationFlag])
-
 	return (
 		<>
 			{/* Title and prompt section */}
-			<section className="p-3 p-lg-4 px-lg-5">
+			<section className="p-3 p-lg-4 px-lg-5 pb-2 pb-lg-3">
 				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Super Dalle-3</h1>
 				<div className="container-fluid">
 					<div className="row">
@@ -138,7 +121,31 @@ function Homepage() {
 							</button>
 						</div>
 					</div>
-					<div>
+          {/* Big screens */}
+					<div className="input-group mt-3 mb-2 w-50 mx-auto d-none d-sm-flex">
+						<button className="btn btn-success" onClick={() => updateAccount(newAccount, false)}>
+							Add Account
+						</button>
+						<input
+							className="form-control"
+							type="text"
+							value={newAccount}
+							onChange={(e) => setNewAccount(e.target.value)}
+						></input>
+					</div>
+          {/* Small screens */}
+					<div className="mt-4 mb-2 d-sm-none">
+						<button className="btn btn-success w-100 mb-2" onClick={() => updateAccount(newAccount, false)}>
+							Add Account
+						</button>
+						<input
+							className="form-control "
+							type="text"
+							value={newAccount}
+							onChange={(e) => setNewAccount(e.target.value)}
+						></input>
+					</div>
+					<div className="text-center fs-4">
 						Accounts generating: {generatingCount} / {accounts.length}
 					</div>
 				</div>
@@ -163,8 +170,6 @@ function Homepage() {
 					</div>
 				</div>
 			</section>
-			<button onClick={() => updateAccount('gilbasim', false)}>add account</button>
-			<button onClick={() => getIsGenerating('gilbasimtest')}>test</button>
 		</>
 	)
 }
