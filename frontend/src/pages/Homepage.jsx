@@ -45,7 +45,7 @@ function Homepage() {
 						console.log('returning - going outside the function')
 						return
 					}
-					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
+					setUrlArray((prevUrlArray) => [...response.data[account.auth_cookie], ...prevUrlArray])
 				})
 				.catch((error) => {
 					updateAccount(account.auth_cookie, false)
@@ -68,21 +68,38 @@ function Homepage() {
 
 	function getIsGenerating(authCookie) {
 		const queryRef = query(ref(db, `accounts/${authCookie}`))
-    let generating
+		let generating
 		onValue(queryRef, (snapshot) => {
 			if (!snapshot.exists()) {
 				console.log('Snapshot doesnt exist')
 				return
 			}
-      generating = snapshot.val().isGenerating
+			generating = snapshot.val().isGenerating
 		})
-    return generating
+		return generating
 	}
 
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
 		accounts.forEach((account) => {
 			updateAccount(account.auth_cookie, false)
+		})
+	}
+
+	function pingApiServers() {
+		apiServers.map((server) => {
+			axios
+				.get(`${server}/ping`)
+				.then((response) => {
+					if (response.status === 200) {
+						console.log(`${server} is alive.`)
+					} else {
+						console.log(`${server} returned status ${response.status}.`)
+					}
+				})
+				.catch((error) => {
+					console.error(`Error while pinging ${server}: ${error}`)
+				})
 		})
 	}
 
@@ -121,7 +138,7 @@ function Homepage() {
 							</button>
 						</div>
 					</div>
-          {/* Big screens */}
+					{/* Big screens */}
 					<div className="input-group mt-3 mb-2 w-50 mx-auto d-none d-sm-flex">
 						<button className="btn btn-success" onClick={() => updateAccount(newAccount, false)}>
 							Add Account
@@ -133,18 +150,21 @@ function Homepage() {
 							onChange={(e) => setNewAccount(e.target.value)}
 						></input>
 					</div>
-          {/* Small screens */}
+					{/* Small screens */}
 					<div className="mt-4 mb-2 d-sm-none">
-						<button className="btn btn-success w-100 mb-2" onClick={() => updateAccount(newAccount, false)}>
-							Add Account
-						</button>
 						<input
-							className="form-control "
+							className="form-control mb-2"
 							type="text"
 							value={newAccount}
 							onChange={(e) => setNewAccount(e.target.value)}
 						></input>
+						<button className="btn btn-success w-100" onClick={() => updateAccount(newAccount, false)}>
+							Add Account
+						</button>
 					</div>
+					<button className="btn btn-danger mb-2 col-12 col-sm-6 d-block mx-auto" onClick={pingApiServers}>
+						Ping Api Servers
+					</button>
 					<div className="text-center fs-4">
 						Accounts generating: {generatingCount} / {accounts.length}
 					</div>

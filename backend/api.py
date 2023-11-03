@@ -17,6 +17,12 @@ CORS(
 
 results = {}
 
+@app.route('/ping')
+@cross_origin()
+def handlePing():
+    print('the server got pinged')
+    return 'pinged'
+
 @app.route('/generate-images', methods=['POST'])
 @cross_origin()
 def generate_images():
