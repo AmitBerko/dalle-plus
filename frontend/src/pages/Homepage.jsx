@@ -107,7 +107,7 @@ function Homepage() {
 		<>
 			{/* Title and prompt section */}
 			<section className="p-3 p-lg-4 px-lg-5 pb-2 pb-lg-3">
-				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Super Dalle-3</h1>
+				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Image Creator</h1>
 				<div className="container-fluid">
 					<div className="row">
 						<div className="col-12">
@@ -141,12 +141,12 @@ function Homepage() {
 
 					{/* Add account - BIG */}
 					<div className="row mt-3 mb-2 d-none d-md-flex">
-						<div className="col-6">
+						<div className="col-3 pe-1">
 							<button className="btn btn-danger d-none w-100 d-md-block" onClick={pingApiServers}>
 								Ping Api Servers
 							</button>
 						</div>
-						<div className="col-6">
+						<div className="col-9 ps-1">
 							<div className="input-group d-none d-md-flex">
 								<button className="btn btn-success" onClick={() => updateAccount(newAccount, false)}>
 									Add Account
