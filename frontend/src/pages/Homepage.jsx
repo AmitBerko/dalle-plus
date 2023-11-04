@@ -138,20 +138,31 @@ function Homepage() {
 							</button>
 						</div>
 					</div>
-					{/* Big screens */}
-					<div className="input-group mt-3 mb-2 w-50 mx-auto d-none d-sm-flex">
-						<button className="btn btn-success" onClick={() => updateAccount(newAccount, false)}>
-							Add Account
-						</button>
-						<input
-							className="form-control"
-							type="text"
-							value={newAccount}
-							onChange={(e) => setNewAccount(e.target.value)}
-						></input>
+
+					{/* Add account - BIG */}
+					<div className="row mt-3 mb-2 d-none d-md-flex">
+						<div className="col-6">
+							<button className="btn btn-danger d-none w-100 d-md-block" onClick={pingApiServers}>
+								Ping Api Servers
+							</button>
+						</div>
+						<div className="col-6">
+							<div className="input-group d-none d-md-flex">
+								<button className="btn btn-success" onClick={() => updateAccount(newAccount, false)}>
+									Add Account
+								</button>
+								<input
+									className="form-control"
+									type="text"
+									value={newAccount}
+									onChange={(e) => setNewAccount(e.target.value)}
+								></input>
+							</div>
+						</div>
 					</div>
-					{/* Small screens */}
-					<div className="mt-4 mb-2 d-sm-none">
+
+					{/* Add account - Small */}
+					<div className="mt-4 mb-2 d-md-none">
 						<input
 							className="form-control mb-2"
 							type="text"
@@ -162,7 +173,9 @@ function Homepage() {
 							Add Account
 						</button>
 					</div>
-					<button className="btn btn-danger mb-2 col-12 col-sm-6 d-block mx-auto" onClick={pingApiServers}>
+
+					{/* Ping button - SMALL */}
+					<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={pingApiServers}>
 						Ping Api Servers
 					</button>
 					<div className="text-center fs-4">
