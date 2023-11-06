@@ -87,8 +87,8 @@ function Homepage() {
 	}
 
 	function pingApiServers() {
-		apiServers.map((server) => {
-			axios
+		const pingRequests = apiServers.map(async server => {
+			return axios
 				.get(`${server}/ping`)
 				.then((response) => {
 					if (response.status === 200) {
@@ -101,6 +101,15 @@ function Homepage() {
 					console.error(`Error while pinging ${server}: ${error}`)
 				})
 		})
+
+		// Wait for all ping requests to complete
+		Promise.all(pingRequests)
+			.then(() => {
+        alert('All servers are currently up!')
+			})
+			.catch((error) => {
+				alert('An error occurred while pinging servers:', error)
+			})
 	}
 
 	return (
