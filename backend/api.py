@@ -45,6 +45,8 @@ def generate_images_for_account(account, prompt):
     except Exception as e:
         # print(f'Account {account["auth_cookie"][:5]} crashed: {str(e)}')
         print(f'{account['auth_cookie'][:5]} crashed due to: {str(e)[:50]}')
+        results[account['auth_cookie']] = None
+
 
 @app.route('/')
 def test():
