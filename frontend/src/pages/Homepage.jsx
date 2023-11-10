@@ -5,10 +5,22 @@ import { db } from '../index'
 import { ref, set, onValue, query } from 'firebase/database'
 
 function Homepage() {
-	const [urlArray, setUrlArray] = useState([])
+	const [urlArray, setUrlArray] = useState([
+		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		'https://tse4.mm.bing.net/th/id/OIG.H0s1rsgj0HtBWeUq3i5S',
+		'https://tse2.mm.bing.net/th/id/OIG.bri9oao3CDK8wMHi87jP',
+	])
+  const [filteredUrlArray, setFilteredUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
 	const [newAccount, setNewAccount] = useState('')
+	const [doFilter, setDoFilter] = useState(false)
+
+	const errorImages = [
+		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE', // Sad robot - blocked by bing
+		'https://tse4.mm.bing.net/th/id/OIG.H0s1rsgj0HtBWeUq3i5S', // Skull - account expired / banned
+		// 'https://tse2.mm.bing.net/th/id/OIG.bri9oao3CDK8wMHi87jP', // Question mark - idk, shouldn't appear
+	]
 
 	useEffect(() => {
 		window.addEventListener('beforeunload', handleUnload)
@@ -18,7 +30,27 @@ function Homepage() {
 		}
 	}, [])
 
+	useEffect(() => {
+		const filteredUrls = urlArray.filter((image) => !errorImages.includes(image))
+    setFilteredUrlArray(filteredUrls)
+	}, [urlArray])
+
 	let curApiServer
+
+	// const handleGenerate = async () => {
+	//   if (!prompt) return
+
+	//   try {
+	//     const response = await axios.post('http://127.0.0.1:8080/generate-images', {prompt, account})
+
+	//     console.log(`response is ${response}`)
+
+	//   } catch (error) {
+	//     console.log('Error generating images:', error)
+	//   }
+
+	// }
+
 	const handleGenerate = () => {
 		if (!prompt) return
 		setUrlArray([])
@@ -45,7 +77,7 @@ function Homepage() {
 						console.log('returning - going outside the function')
 						return
 					}
-					setUrlArray((prevUrlArray) => [...response.data[account.auth_cookie], ...prevUrlArray])
+					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
 				})
 				.catch((error) => {
 					updateAccount(account.auth_cookie, false)
@@ -87,7 +119,7 @@ function Homepage() {
 	}
 
 	function pingApiServers() {
-		const pingRequests = apiServers.map(async server => {
+		const pingRequests = apiServers.map(async (server) => {
 			return axios
 				.get(`${server}/ping`)
 				.then((response) => {
@@ -105,7 +137,7 @@ function Homepage() {
 		// Wait for all ping requests to complete
 		Promise.all(pingRequests)
 			.then(() => {
-        alert('All servers are currently up!')
+				alert('All servers are currently up!')
 			})
 			.catch((error) => {
 				alert('An error occurred while pinging servers:', error)
@@ -148,7 +180,7 @@ function Homepage() {
 						</div>
 					</div>
 
-					{/* Add account - BIG */}
+					{/* Add account - Big */}
 					<div className="row mt-3 mb-2 d-none d-md-flex">
 						<div className="col-3 pe-1">
 							<button className="btn btn-danger d-none w-100 d-md-block" onClick={pingApiServers}>
@@ -183,32 +215,70 @@ function Homepage() {
 						</button>
 					</div>
 
-					{/* Ping button - SMALL */}
+					{/* Ping button - Small */}
 					<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={pingApiServers}>
 						Ping Api Servers
 					</button>
-					<div className="text-center fs-4">
-						Accounts generating: {generatingCount} / {accounts.length}
+
+					{/* Accounts / images / Checkbox */}
+					<div className="row">
+						<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
+							<div className="fs-4 text-center">
+								Accounts generating: {generatingCount} / {accounts.length}
+							</div>
+						</div>
+						<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
+							<div className="fs-4 text-center">Successful images: {filteredUrlArray.length}</div>
+						</div>
+
+						<div className="col-xl-4">
+							<div className="form-check form-switch d-flex justify-content-center align-items-center">
+								<input
+									className="form-check-input me-2 me-lg-3 switch-size"
+									type="checkbox"
+									role="switch"
+									checked={doFilter}
+									onClick={() => setDoFilter((prev) => !prev)}
+									id="imageFilterSwitch"
+								/>
+								<label className="form-check-label fs-4" htmlFor="imageFilterSwitch">
+									Filter Bad Images
+								</label>
+							</div>
+						</div>
 					</div>
 				</div>
 			</section>
 
-			{/* Result images section */}
+			{/* Result images section, Shows either all images or only successful ones (depending if filter's true) */}
 			<section>
 				<div className="container-fluid px-2 px-md-5">
 					<div className="row justify-content-center">
-						{urlArray.map((url, index) => {
-							return (
-								<img
-									key={index}
-									src={url}
-									alt={url}
-									className="img-fluid generated-image p-2 m-0"
-									onClick={() => window.open(url, '_blank')}
-									style={{ cursor: 'pointer' }}
-								/>
-							)
-						})}
+						{doFilter
+							? filteredUrlArray.map((url, index) => {
+									return (
+										<img
+											key={index}
+											src={url}
+											alt={url}
+											className="img-fluid generated-image p-2 m-0"
+											onClick={() => window.open(url, '_blank')}
+											style={{ cursor: 'pointer' }}
+										/>
+									)
+							  })
+							: urlArray.map((url, index) => {
+									return (
+										<img
+											key={index}
+											src={url}
+											alt={url}
+											className="img-fluid generated-image p-2 m-0"
+											onClick={() => window.open(url, '_blank')}
+											style={{ cursor: 'pointer' }}
+										/>
+									)
+							  })}
 					</div>
 				</div>
 			</section>
