@@ -6,11 +6,12 @@ import { ref, set, onValue, query } from 'firebase/database'
 
 function Homepage() {
 	const [urlArray, setUrlArray] = useState([])
-  const [filteredUrlArray, setFilteredUrlArray] = useState([])
+	const [filteredUrlArray, setFilteredUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
 	const [newAccount, setNewAccount] = useState('')
 	const [doFilter, setDoFilter] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
 
 	const errorImages = [
 		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE', // Sad robot - blocked by bing
@@ -28,7 +29,10 @@ function Homepage() {
 
 	useEffect(() => {
 		const filteredUrls = urlArray.filter((image) => !errorImages.includes(image))
-    setFilteredUrlArray(filteredUrls)
+    // Set isGenerating to true either if there's a good image, or 50% of accounts has finished generating
+    if (filteredUrls.length > 0) setIsGenerating(false)
+    if (generatingCount <= parseInt(accounts.length * 0.5)) setIsGenerating(false)
+		setFilteredUrlArray(filteredUrls)
 	}, [urlArray])
 
 	let curApiServer
@@ -50,6 +54,7 @@ function Homepage() {
 	const handleGenerate = () => {
 		if (!prompt) return
 		setUrlArray([])
+    setIsGenerating(true)
 		for (let index = 0; index < accounts.length; index++) {
 			const account = accounts[index] // Get the account
 			if (getIsGenerating(account.auth_cookie)) {
@@ -144,7 +149,7 @@ function Homepage() {
 		<>
 			{/* Title and prompt section */}
 			<section className="p-3 p-lg-4 px-lg-5 pb-2 pb-lg-3">
-				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Image Creator</h1>
+				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Super Dalle-3</h1>
 				<div className="container-fluid">
 					<div className="row">
 						<div className="col-12">
@@ -164,15 +169,33 @@ function Homepage() {
 									className="form-control fs-6 d-sm-none"
 									rows="4"
 								></textarea>
-								<button onClick={handleGenerate} className="btn btn-primary btn-lg d-none d-sm-inline">
-									Generate
-								</button>
+								{isGenerating ? (
+									<button className="btn btn-primary btn-lg d-none d-sm-inline" style={{ width: '175px' }} disabled>
+										<span className="spinner-border spinner-size me-2" role="status" aria-hidden="true"></span>
+										Generating...
+									</button>
+								) : (
+									<button
+										onClick={handleGenerate}
+										className="btn btn-primary btn-lg d-none d-sm-inline"
+										style={{ width: '175px' }}
+									>
+										Generate
+									</button>
+								)}
 							</div>
 						</div>
 						<div className="col-12 mt-2 mt-lg-0">
-							<button onClick={handleGenerate} className="btn btn-primary btn-lg w-100 d-sm-none">
-								Generate
-							</button>
+							{isGenerating ? (
+								<button onClick={handleGenerate} disabled className="btn btn-primary btn-lg w-100 d-sm-none">
+                  <span className="spinner-border spinner-size me-2"></span>
+									Generating...
+								</button>
+							) : (
+								<button onClick={handleGenerate} className="btn btn-primary btn-lg w-100 d-sm-none">
+									Generate
+								</button>
+							)}
 						</div>
 					</div>
 
