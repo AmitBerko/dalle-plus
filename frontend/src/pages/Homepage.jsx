@@ -5,11 +5,7 @@ import { db } from '../index'
 import { ref, set, onValue, query } from 'firebase/database'
 
 function Homepage() {
-	const [urlArray, setUrlArray] = useState([
-		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		'https://tse4.mm.bing.net/th/id/OIG.H0s1rsgj0HtBWeUq3i5S',
-		'https://tse2.mm.bing.net/th/id/OIG.bri9oao3CDK8wMHi87jP',
-	])
+	const [urlArray, setUrlArray] = useState([])
   const [filteredUrlArray, setFilteredUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
@@ -19,7 +15,7 @@ function Homepage() {
 	const errorImages = [
 		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE', // Sad robot - blocked by bing
 		'https://tse4.mm.bing.net/th/id/OIG.H0s1rsgj0HtBWeUq3i5S', // Skull - account expired / banned
-		// 'https://tse2.mm.bing.net/th/id/OIG.bri9oao3CDK8wMHi87jP', // Question mark - idk, shouldn't appear
+		'https://tse2.mm.bing.net/th/id/OIG.bri9oao3CDK8wMHi87jP', // Question mark - idk, shouldn't appear
 	]
 
 	useEffect(() => {
