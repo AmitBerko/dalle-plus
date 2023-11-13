@@ -1,3 +1,5 @@
+// Change file name to accounts.js
+
 const accounts = [
 	{
 		auth_cookie: '<Your _U cookie>',
@@ -8,6 +10,7 @@ const accounts = [
   // Add more accounts as needed
 ]
 
-const apiServers = ['http://<Your api server ip>'] // Add more if needed 
+// Add more if needed (some free servers don't let you send multiple requests at once)
+const apiServers = ['http://<Your api server ip>']
 
 module.exports = { accounts, apiServers }
