@@ -32,7 +32,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 	const [user, setUser] = useState(null)
 	const [accounts, setAccounts] = useState([])
 
-	useEffect(() => {
+	useEffect(() => { // Getting initial user data
 		const userQuery = query(ref(db, `users/${userUid}`))
 		onValue(userQuery, (snapshot) => {
 			if (!snapshot.exists) {
@@ -44,7 +44,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 		})
 	}, [])
 
-	const curRef = 'testing'
+	const curRef = `users/${userUid}/accounts`
 
 	const errorImages = [
 		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE', // Sad robot - blocked by bing
@@ -65,6 +65,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 		// Set isGenerating to true either if there's a good image, or 50% of accounts has finished generating
 		if (filteredUrls.length > 0) setIsGenerating(false)
 		if (generatingCount <= parseInt(accounts.length * 0.5)) setIsGenerating(false)
+    // if (generatingCount === 0) setIsGenerating(false)
 		setFilteredUrlArray(filteredUrls)
 	}, [urlArray])
 
@@ -76,51 +77,50 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 		setIsGenerating(true)
 		for (let index = 0; index < accounts.length; index++) {
 			const account = accounts[index] // Get the account
-			if (getIsGenerating(account.auth_cookie)) {
-				console.log(`${account.auth_cookie.slice(0, 5)} is still generating. skipping it`)
+			console.log(`the account is`, account)
+			if (getIsGenerating(account.cookie)) {
+				console.log(`${account.cookie.slice(0, 5)} is still generating. skipping it`)
 				continue // Skip this iteration if the account is already generating
 			}
 
-			updateGeneratingStatus(account.auth_cookie, true) // Set "isGenerating" to true for that account
+			updateGeneratingStatus(account.cookie, true) // Set "isGenerating" to true for that account
 			setGeneratingCount((prev) => prev + 1)
 			curApiServer = apiServers[index % apiServers.length]
-			console.log(`sending request from ${account.auth_cookie.slice(0, 5)} to ${curApiServer}`)
+			console.log(`sending request from ${account.cookie.slice(0, 5)} to ${curApiServer}`)
 			axios
 				.post(`${curApiServer}/generate-images`, { prompt, account })
 				.then((response) => {
-					updateGeneratingStatus(account.auth_cookie, false)
+					updateGeneratingStatus(account.cookie, false)
 					setGeneratingCount((prev) => prev - 1)
-					let newUrls = response.data[account.auth_cookie]
-					console.log(`${account.auth_cookie.slice(0, 5)} generated ${[newUrls]}`)
+					let newUrls = response.data[account.cookie]
+					console.log(`${account.cookie.slice(0, 5)} generated ${[newUrls]}`)
 
 					if (!newUrls || newUrls === undefined) {
 						console.log('returning - going outside the function')
 						return
 					}
-					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
+					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.cookie]])
 				})
 				.catch((error) => {
-					updateGeneratingStatus(account.auth_cookie, false)
+					updateGeneratingStatus(account.cookie, false)
 					setGeneratingCount((prev) => prev - 1)
-					console.error(`Error for ${account.auth_cookie.slice(0, 5)}: ${error}`)
+					console.error(`Error for ${account.cookie.slice(0, 5)}: ${error}`)
 				})
 		}
 	}
 
-	function updateGeneratingStatus(authCookie, isGenerating) {
-		if (authCookie === undefined || authCookie === '') return
-		// Define the account data
-		const updatedAccountData = {
-			isGenerating: isGenerating,
-		}
+	function updateGeneratingStatus(cookie, isGenerating) {
+		if (cookie === undefined || cookie === '') return
+    const accountIndex = accounts.findIndex(acc => acc.cookie === cookie)
+		const newAccountRef = ref(db, `${curRef}/${accountIndex}`)
 
-		const newAccountRef = ref(db, `${curRef}/` + authCookie)
-		update(newAccountRef, updatedAccountData)
+		update(newAccountRef, {cookie: cookie, isGenerating: isGenerating})
 	}
 
 	function getIsGenerating(cookie) {
-    const account = accounts.find(acc => acc.cookie === cookie)
-    return account.isGenerating
+		const account = accounts.find((acc) => acc.cookie === cookie)
+    console.log(`account:` + account + `s isgenerating is: ${account.isGenerating}`)
+		return account.isGenerating
 
 		// const queryRef = query(ref(db, `${curRef}/${authCookie}`))
 		// let generating
@@ -137,7 +137,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
 		accounts.forEach((account) => {
-			updateGeneratingStatus(account.auth_cookie, false)
+			updateGeneratingStatus(account.cookie, false)
 		})
 	}
 
@@ -270,7 +270,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				<div className="row">
 					<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
 						<div className="fs-4 text-center">
-							Accounts generating: {generatingCount} / {accounts.length}
+							{accounts ? `Accounts generating: ${generatingCount} / ${accounts.length}` : 'Accounts generating: '}
 						</div>
 					</div>
 					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
@@ -333,7 +333,16 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				</button>
 				<AccountsModal userUid={userUid} accounts={accounts} setAccounts={setAccounts} />
 			</div>
-			<button onClick={() => printUser(userUid)}>print user</button>
+			<button
+				onClick={() =>
+					updateGeneratingStatus(
+            'abcde',
+            false
+					)
+				}
+			>
+				print user
+			</button>
 		</>
 	)
 }

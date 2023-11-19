@@ -6,35 +6,35 @@ import { ref, get, onValue, query, update } from 'firebase/database'
 function AccountsModal({ userUid, accounts, setAccounts }) {
 	const [cookieInput, setCookieInput] = useState('')
 
-  const userRef = ref(db, `users/${userUid}`)
+	const userRef = ref(db, `users/${userUid}`)
 
-  useEffect(() => {
-    const getAccounts = async () => {
-      const snapshot = await get(userRef)
-      const accounts = snapshot.val().accounts
-      setAccounts(accounts)
-    }
+	useEffect(() => {
+		const getAccounts = async () => {
+			const snapshot = await get(userRef)
+			const accounts = snapshot.val().accounts
+			setAccounts(accounts)
+		}
 
-    getAccounts()
+		getAccounts()
+	}, [])
 
-  }, [])
-
-  function removeAccount(cookie) {
-    const result = accounts.filter((account) => account.cookie !== cookie)
-    setAccounts(result)
-    update(userRef, { accounts: result })
-  }
+	function removeAccount(cookie) {
+		const result = accounts.filter((account) => account.cookie !== cookie)
+		setAccounts(result)
+		update(userRef, { accounts: result })
+	}
 
 	async function handleAddAccount() {
 		console.log('user is', userUid)
 		if (cookieInput === '') return
 
 		try {
-			
 			// const snapshot = await get(userRef)
 			// const curAccounts = snapshot.val().accounts || []
-      const newAccounts = [{cookie: cookieInput, isGenerating: false}, ...accounts]
-      setAccounts(newAccounts)
+      console.log(`the accounts are`, accounts)
+			const newAccounts = [{ cookie: cookieInput, isGenerating: false }, ...(accounts ? accounts : [])]
+			setAccounts(newAccounts)
+      setCookieInput('')
 			update(userRef, { accounts: newAccounts })
 		} catch (error) {
 			console.log(`error is ${error}`)
@@ -68,11 +68,11 @@ function AccountsModal({ userUid, accounts, setAccounts }) {
 								<div className="col-6 me-2">_U Cookie</div>
 								<div className="col-3">Expires in</div>
 
-                {
-                  accounts.map((account, index) => {
-                    return <Account key={index} removeAccount={removeAccount} cookie={account.cookie} />
-                  })
-                }
+								{accounts
+									? accounts.map((account, index) => {
+											return <Account key={index} removeAccount={removeAccount} cookie={account.cookie} />
+									  })
+									: null}
 							</div>
 						</div>
 

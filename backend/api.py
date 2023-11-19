@@ -33,19 +33,19 @@ def generate_images():
         return 'Invalid request data', 400
 
     generate_images_for_account(account, prompt)
-    print(f"account is {account['auth_cookie'][:5]} and results is {results}")
+    print(f"account is {account.cookie[:5]} and results is {results}")
     return results
 
 def generate_images_for_account(account, prompt):
-    image_gen = ImageGen(auth_cookie=account['auth_cookie'], auth_cookie_SRCHHPGUSR='your_auth_cookie_SRCHHPGUSR')
+    image_gen = ImageGen(auth_cookie=account.cookie, auth_cookie_SRCHHPGUSR='your_auth_cookie_SRCHHPGUSR')
     try:
         links = image_gen.get_images(prompt)
-        print(f'Links for {account["auth_cookie"][:5]}: {links}')
-        results[account['auth_cookie']] = links
+        print(f'Links for {account.cookie[:5]}: {links}')
+        results[account.cookie] = links
     except Exception as e:
         # print(f'Account {account["auth_cookie"][:5]} crashed: {str(e)}')
-        print(f"{account['auth_cookie'][:5]} crashed due to: {str(e)[:50]}")
-        results[account['auth_cookie']] = None
+        print(f"{account.cookie[:5]} crashed due to: {str(e)[:50]}")
+        results[account.cookie] = None
 
 
 @app.route('/')
