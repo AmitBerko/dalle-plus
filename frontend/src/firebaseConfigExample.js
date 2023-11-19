@@ -1,4 +1,4 @@
-// Your web app's Firebase configuration
+// Your web app's Firebase configuration, this is needed for firebase's realtime db.
 const firebaseConfig = {
 	apiKey: '',
 	authDomain: '',
