@@ -1,17 +1,50 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { accounts, apiServers } from '../accounts'
-import { db } from '../index'
-import { ref, set, onValue, query } from 'firebase/database'
+import { db } from '../firebaseConfig'
+import { ref, set, onValue, query, update } from 'firebase/database'
+import AccountsModal from '../components/AccountsModal'
 
-function Homepage() {
-	const [urlArray, setUrlArray] = useState([])
+function Homepage({ setIsLoggedIn, userUid, userName }) {
+	const [urlArray, setUrlArray] = useState([
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
+	])
 	const [filteredUrlArray, setFilteredUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
-	const [newAccount, setNewAccount] = useState('')
 	const [doFilter, setDoFilter] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
+	const [isGenerating, setIsGenerating] = useState(false)
+	const [user, setUser] = useState(null)
+	const [accounts, setAccounts] = useState([])
+
+	useEffect(() => {
+		const userQuery = query(ref(db, `users/${userUid}`))
+		onValue(userQuery, (snapshot) => {
+			if (!snapshot.exists) {
+				console.log(`user doesnt exist. (this messsage shouldnt appear)`)
+				return
+			}
+			console.log(`user was set:`, snapshot.val())
+			setUser(snapshot.val())
+		})
+	}, [])
+
+	const curRef = 'testing'
 
 	const errorImages = [
 		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE', // Sad robot - blocked by bing
@@ -29,32 +62,18 @@ function Homepage() {
 
 	useEffect(() => {
 		const filteredUrls = urlArray.filter((image) => !errorImages.includes(image))
-    // Set isGenerating to true either if there's a good image, or 50% of accounts has finished generating
-    if (filteredUrls.length > 0) setIsGenerating(false)
-    if (generatingCount <= parseInt(accounts.length * 0.5)) setIsGenerating(false)
+		// Set isGenerating to true either if there's a good image, or 50% of accounts has finished generating
+		if (filteredUrls.length > 0) setIsGenerating(false)
+		if (generatingCount <= parseInt(accounts.length * 0.5)) setIsGenerating(false)
 		setFilteredUrlArray(filteredUrls)
 	}, [urlArray])
 
 	let curApiServer
 
-	// const handleGenerate = async () => {
-	//   if (!prompt) return
-
-	//   try {
-	//     const response = await axios.post('http://127.0.0.1:8080/generate-images', {prompt, account})
-
-	//     console.log(`response is ${response}`)
-
-	//   } catch (error) {
-	//     console.log('Error generating images:', error)
-	//   }
-
-	// }
-
 	const handleGenerate = () => {
 		if (!prompt) return
 		setUrlArray([])
-    setIsGenerating(true)
+		setIsGenerating(true)
 		for (let index = 0; index < accounts.length; index++) {
 			const account = accounts[index] // Get the account
 			if (getIsGenerating(account.auth_cookie)) {
@@ -62,14 +81,14 @@ function Homepage() {
 				continue // Skip this iteration if the account is already generating
 			}
 
-			updateAccount(account.auth_cookie, true) // Set "isGenerating" to true for that account
+			updateGeneratingStatus(account.auth_cookie, true) // Set "isGenerating" to true for that account
 			setGeneratingCount((prev) => prev + 1)
 			curApiServer = apiServers[index % apiServers.length]
 			console.log(`sending request from ${account.auth_cookie.slice(0, 5)} to ${curApiServer}`)
 			axios
 				.post(`${curApiServer}/generate-images`, { prompt, account })
 				.then((response) => {
-					updateAccount(account.auth_cookie, false)
+					updateGeneratingStatus(account.auth_cookie, false)
 					setGeneratingCount((prev) => prev - 1)
 					let newUrls = response.data[account.auth_cookie]
 					console.log(`${account.auth_cookie.slice(0, 5)} generated ${[newUrls]}`)
@@ -81,41 +100,44 @@ function Homepage() {
 					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.auth_cookie]])
 				})
 				.catch((error) => {
-					updateAccount(account.auth_cookie, false)
+					updateGeneratingStatus(account.auth_cookie, false)
 					setGeneratingCount((prev) => prev - 1)
 					console.error(`Error for ${account.auth_cookie.slice(0, 5)}: ${error}`)
 				})
 		}
 	}
 
-	function updateAccount(authCookie, isGenerating) {
+	function updateGeneratingStatus(authCookie, isGenerating) {
 		if (authCookie === undefined || authCookie === '') return
 		// Define the account data
-		const newAccountData = {
+		const updatedAccountData = {
 			isGenerating: isGenerating,
 		}
 
-		const newAccountRef = ref(db, 'accounts/' + authCookie)
-		set(newAccountRef, newAccountData)
+		const newAccountRef = ref(db, `${curRef}/` + authCookie)
+		update(newAccountRef, updatedAccountData)
 	}
 
-	function getIsGenerating(authCookie) {
-		const queryRef = query(ref(db, `accounts/${authCookie}`))
-		let generating
-		onValue(queryRef, (snapshot) => {
-			if (!snapshot.exists()) {
-				console.log('Snapshot doesnt exist')
-				return
-			}
-			generating = snapshot.val().isGenerating
-		})
-		return generating
+	function getIsGenerating(cookie) {
+    const account = accounts.find(acc => acc.cookie === cookie)
+    return account.isGenerating
+
+		// const queryRef = query(ref(db, `${curRef}/${authCookie}`))
+		// let generating
+		// onValue(queryRef, (snapshot) => {
+		// 	if (!snapshot.exists()) {
+		// 		console.log("Snapshot doesn't exist")
+		// 		return
+		// 	}
+		// 	generating = snapshot.val().isGenerating
+		// })
+		// return generating
 	}
 
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
 		accounts.forEach((account) => {
-			updateAccount(account.auth_cookie, false)
+			updateGeneratingStatus(account.auth_cookie, false)
 		})
 	}
 
@@ -145,125 +167,129 @@ function Homepage() {
 			})
 	}
 
+	function printUser(userUid) {
+		const userQuery = query(ref(db, `users/${userUid}`))
+
+		onValue(userQuery, (snapshot) => {
+			if (!snapshot.exists) {
+				console.log('snapshot doesnt exist')
+				return
+			}
+			console.log(snapshot.val())
+		})
+	}
+
 	return (
 		<>
 			{/* Title and prompt section */}
-			<section className="p-3 p-lg-4 px-lg-5 pb-2 pb-lg-3">
-				<h1 className="text-center mb-3 mb-lg-4 display-4 fw-bold">Super Dalle-3</h1>
-				<div className="container-fluid">
-					<div className="row">
-						<div className="col-12">
-							<div className="input-group">
-								<input
-									maxLength="480"
-									type="text"
-									value={prompt}
-									onChange={(event) => setPrompt(event.target.value)}
-									className="form-control fs-6 d-none d-sm-block"
-								></input>
-								<textarea
-									maxLength="480"
-									type="text"
-									value={prompt}
-									onChange={(event) => setPrompt(event.target.value)}
-									className="form-control fs-6 d-sm-none"
-									rows="4"
-								></textarea>
-								{isGenerating ? (
-									<button className="btn btn-primary btn-lg d-none d-sm-inline" style={{ width: '175px' }} disabled>
-										<span className="spinner-border spinner-size me-2" role="status" aria-hidden="true"></span>
-										Generating...
-									</button>
-								) : (
-									<button
-										onClick={handleGenerate}
-										className="btn btn-primary btn-lg d-none d-sm-inline"
-										style={{ width: '175px' }}
-									>
-										Generate
-									</button>
-								)}
-							</div>
-						</div>
-						<div className="col-12 mt-2 mt-lg-0">
+			<section className="container-fluid p-3 pt-0 p-md-4 pt-md-0 px-lg-5 pb-2 pb-lg-3">
+				<div className="row mb-3 mb-lg-4 position-relative">
+					<p className="col-12 fs-6 position-absolute mt-3">
+						{user ? `Hello ${user.name}` : ''}{' '}
+						<a style={{ cursor: 'pointer', color: 'lightblue' }} onClick={() => setIsLoggedIn(false)}>
+							Log out
+						</a>
+					</p>
+					<h1 className="text-center display-4 fw-bold mx-auto pt-3 pt-md-2 mt-4 mt-md-2 col-12">Super Dalle-3</h1>
+				</div>
+				<div className="row">
+					<div className="col-12">
+						<div className="input-group">
+							<input
+								maxLength="480"
+								type="text"
+								value={prompt}
+								onChange={(event) => setPrompt(event.target.value)}
+								className="form-control fs-6 d-none d-sm-block"
+							></input>
+							<textarea
+								maxLength="480"
+								type="text"
+								value={prompt}
+								onChange={(event) => setPrompt(event.target.value)}
+								className="form-control fs-6 d-sm-none"
+								rows="4"
+							></textarea>
 							{isGenerating ? (
-								<button onClick={handleGenerate} disabled className="btn btn-primary btn-lg w-100 d-sm-none">
-                  <span className="spinner-border spinner-size me-2"></span>
+								<button className="btn btn-primary btn-lg d-none d-sm-inline" style={{ width: '175px' }} disabled>
+									<span className="spinner-border spinner-size me-2" role="status" aria-hidden="true"></span>
 									Generating...
 								</button>
 							) : (
-								<button onClick={handleGenerate} className="btn btn-primary btn-lg w-100 d-sm-none">
+								<button
+									onClick={handleGenerate}
+									className="btn btn-primary btn-lg d-none d-sm-inline"
+									style={{ width: '175px' }}
+								>
 									Generate
 								</button>
 							)}
 						</div>
 					</div>
-
-					{/* Add account - Big */}
-					<div className="row mt-3 mb-2 d-none d-md-flex">
-						<div className="col-3 pe-1">
-							<button className="btn btn-danger d-none w-100 d-md-block" onClick={pingApiServers}>
-								Ping Api Servers
+					<div className="col-12 mt-2 mt-lg-0">
+						{isGenerating ? (
+							<button onClick={handleGenerate} disabled className="btn btn-primary btn-lg w-100 d-sm-none">
+								<span className="spinner-border spinner-size me-2"></span>
+								Generating...
 							</button>
-						</div>
-						<div className="col-9 ps-1">
-							<div className="input-group d-none d-md-flex">
-								<button className="btn btn-success" onClick={() => updateAccount(newAccount, false)}>
-									Add Account
-								</button>
-								<input
-									className="form-control"
-									type="text"
-									value={newAccount}
-									onChange={(e) => setNewAccount(e.target.value)}
-								></input>
-							</div>
-						</div>
+						) : (
+							<button onClick={handleGenerate} className="btn btn-primary btn-lg w-100 d-sm-none">
+								Generate
+							</button>
+						)}
 					</div>
-
-					{/* Add account - Small */}
-					<div className="mt-4 mb-2 d-md-none">
-						<input
-							className="form-control mb-2"
-							type="text"
-							value={newAccount}
-							onChange={(e) => setNewAccount(e.target.value)}
-						></input>
-						<button className="btn btn-success w-100" onClick={() => updateAccount(newAccount, false)}>
-							Add Account
+				</div>
+				{/* Add account - Big */}
+				<div className="row mt-3 mb-2 d-none d-md-flex">
+					<div className="col">
+						<button className="btn btn-danger d-none w-100 d-md-block" onClick={pingApiServers}>
+							Ping Api Servers
 						</button>
 					</div>
-
-					{/* Ping button - Small */}
-					<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={pingApiServers}>
-						Ping Api Servers
+					<div className="col">
+						<button
+							className="btn btn-success d-none w-100 d-md-block"
+							data-bs-toggle="modal"
+							data-bs-target="#accounts-modal"
+						>
+							Browse Accounts
+						</button>
+					</div>
+				</div>
+				{/* Add account - Small */}
+				<div className="mt-4 mb-2 d-md-none">
+					<button className="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#accounts-modal">
+						Browse Accounts
 					</button>
-
-					{/* Accounts / images / Checkbox */}
-					<div className="row">
-						<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
-							<div className="fs-4 text-center">
-								Accounts generating: {generatingCount} / {accounts.length}
-							</div>
+				</div>
+				{/* Ping button - Small */}
+				<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={pingApiServers}>
+					Ping Api Servers
+				</button>
+				{/* Accounts / images / Checkbox */}
+				<div className="row">
+					<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
+						<div className="fs-4 text-center">
+							Accounts generating: {generatingCount} / {accounts.length}
 						</div>
-						<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
-							<div className="fs-4 text-center">Successful images: {filteredUrlArray.length}</div>
-						</div>
+					</div>
+					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
+						<div className="fs-4 text-center">Successful images: {filteredUrlArray.length}</div>
+					</div>
 
-						<div className="col-xl-4">
-							<div className="form-check form-switch d-flex justify-content-center align-items-center">
-								<input
-									className="form-check-input me-2 me-lg-3 switch-size"
-									type="checkbox"
-									role="switch"
-									checked={doFilter}
-									onClick={() => setDoFilter((prev) => !prev)}
-									id="imageFilterSwitch"
-								/>
-								<label className="form-check-label fs-4" htmlFor="imageFilterSwitch">
-									Filter Bad Images
-								</label>
-							</div>
+					<div className="col-xl-4">
+						<div className="form-check form-switch d-flex justify-content-center align-items-center">
+							<input
+								className="form-check-input me-2 me-lg-3 switch-size"
+								type="checkbox"
+								role="switch"
+								checked={doFilter}
+								onChange={() => setDoFilter((prev) => !prev)}
+								id="imageFilterSwitch"
+							/>
+							<label className="form-check-label fs-4" htmlFor="imageFilterSwitch">
+								Filter Bad Images
+							</label>
 						</div>
 					</div>
 				</div>
@@ -301,6 +327,13 @@ function Homepage() {
 					</div>
 				</div>
 			</section>
+			<div>
+				<button className="btn btn-warning" data-bs-toggle="modal" data-bs-target="#accounts-modal">
+					open modal
+				</button>
+				<AccountsModal userUid={userUid} accounts={accounts} setAccounts={setAccounts} />
+			</div>
+			<button onClick={() => printUser(userUid)}>print user</button>
 		</>
 	)
 }
