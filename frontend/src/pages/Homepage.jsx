@@ -39,7 +39,6 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				console.log(`user doesnt exist. (this messsage shouldnt appear)`)
 				return
 			}
-			console.log(`user was set:`, snapshot.val())
 			setUser(snapshot.val())
 		})
 	}, [])
@@ -269,12 +268,12 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				{/* Accounts / images / Checkbox */}
 				<div className="row">
 					<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
-						<div className="fs-4 text-center">
-							{accounts ? `Accounts generating: ${generatingCount} / ${accounts.length}` : 'Accounts generating: '}
-						</div>
+						<div className="fs-3 text-center">Successful images: {filteredUrlArray.length}</div>
 					</div>
 					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
-						<div className="fs-4 text-center">Successful images: {filteredUrlArray.length}</div>
+						<div className="fs-3 text-center">
+							{accounts ? `Now generating: ${generatingCount} / ${accounts.length}` : 'Now generating: 0 / 0'}
+						</div>
 					</div>
 
 					<div className="col-xl-4">
@@ -287,7 +286,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 								onChange={() => setDoFilter((prev) => !prev)}
 								id="imageFilterSwitch"
 							/>
-							<label className="form-check-label fs-4" htmlFor="imageFilterSwitch">
+							<label className="form-check-label fs-3" htmlFor="imageFilterSwitch">
 								Filter Bad Images
 							</label>
 						</div>
@@ -327,22 +326,13 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 					</div>
 				</div>
 			</section>
-			<div>
+			{/* <div>
 				<button className="btn btn-warning" data-bs-toggle="modal" data-bs-target="#accounts-modal">
 					open modal
 				</button>
 				<AccountsModal userUid={userUid} accounts={accounts} setAccounts={setAccounts} />
 			</div>
-			<button
-				onClick={() =>
-					updateGeneratingStatus(
-            'abcde',
-            false
-					)
-				}
-			>
-				print user
-			</button>
+			<button onClick={() => updateGeneratingStatus('abcde', false)}>print user</button> */}
 		</>
 	)
 }
