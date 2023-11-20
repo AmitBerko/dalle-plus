@@ -253,6 +253,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 						>
 							Browse Accounts
 						</button>
+						<AccountsModal userUid={userUid} accounts={accounts} setAccounts={setAccounts} />
 					</div>
 				</div>
 				{/* Add account - Small */}
@@ -330,7 +331,6 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				<button className="btn btn-warning" data-bs-toggle="modal" data-bs-target="#accounts-modal">
 					open modal
 				</button>
-				<AccountsModal userUid={userUid} accounts={accounts} setAccounts={setAccounts} />
 			</div>
 			<button onClick={() => updateGeneratingStatus('abcde', false)}>print user</button> */}
 		</>
