@@ -21,7 +21,7 @@ function AccountsModal({ userUid, accounts, setAccounts }) {
       // Each cookie expires after a maximum of 14 days
       if (!accounts || accounts.length === 0) return
       const unexpiredAccounts = accounts.filter((account) => {
-        const isExpired = account.creationDate + expirationLength > Date.now()
+        const isExpired = account.creationDate + expirationLength < Date.now()
         if (!isExpired) return account
       })
       setAccounts(unexpiredAccounts)
@@ -43,7 +43,10 @@ function AccountsModal({ userUid, accounts, setAccounts }) {
 
 		try {
       const creationDate = Date.now()
-			const newAccounts = [{ cookie: cookieInput, isGenerating: false, creationDate }, ...(accounts ? accounts : [])]
+      const match = cookieInput.match(/_U\n(.*?)\n-{3,}/)
+      // Just so I can use an some kind of app that gives me the cookie
+      const cookie = match ? match[1] : cookieInput
+			const newAccounts = [{ cookie: cookie, isGenerating: false, creationDate }, ...(accounts ? accounts : [])]
 			setAccounts(newAccounts)
       setCookieInput('')
 			update(userRef, { accounts: newAccounts, })
