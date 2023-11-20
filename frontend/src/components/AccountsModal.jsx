@@ -5,17 +5,31 @@ import { ref, get, onValue, query, update } from 'firebase/database'
 
 function AccountsModal({ userUid, accounts, setAccounts }) {
 	const [cookieInput, setCookieInput] = useState('')
+  const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
 
 	const userRef = ref(db, `users/${userUid}`)
 
 	useEffect(() => {
+    // Todo: Maybe combine them later
 		const getAccounts = async () => {
 			const snapshot = await get(userRef)
 			const accounts = snapshot.val().accounts
-			setAccounts(accounts)
+			setAccounts(accounts ? accounts : [])
 		}
 
+    const removeExpiredAccounts = () => {
+      // Each cookie expires after a maximum of 14 days
+      if (!accounts || accounts.length === 0) return
+      const unexpiredAccounts = accounts.filter((account) => {
+        const isExpired = account.creationDate + expirationLength > Date.now()
+        if (!isExpired) return account
+      })
+      setAccounts(unexpiredAccounts)
+      update(userRef, { accounts: unexpiredAccounts })
+    }
+
 		getAccounts()
+    removeExpiredAccounts()
 	}, [])
 
 	function removeAccount(cookie) {
@@ -25,17 +39,14 @@ function AccountsModal({ userUid, accounts, setAccounts }) {
 	}
 
 	async function handleAddAccount() {
-		console.log('user is', userUid)
 		if (cookieInput === '') return
 
 		try {
-			// const snapshot = await get(userRef)
-			// const curAccounts = snapshot.val().accounts || []
-      console.log(`the accounts are`, accounts)
-			const newAccounts = [{ cookie: cookieInput, isGenerating: false }, ...(accounts ? accounts : [])]
+      const creationDate = Date.now()
+			const newAccounts = [{ cookie: cookieInput, isGenerating: false, creationDate }, ...(accounts ? accounts : [])]
 			setAccounts(newAccounts)
       setCookieInput('')
-			update(userRef, { accounts: newAccounts })
+			update(userRef, { accounts: newAccounts, })
 		} catch (error) {
 			console.log(`error is ${error}`)
 		}
@@ -65,8 +76,8 @@ function AccountsModal({ userUid, accounts, setAccounts }) {
 
 						<div className="modal-body px-4 mb-1">
 							<div className="row d-flex align-content-center">
-								<div className="col-6 me-2">_U Cookie</div>
-								<div className="col-3">Expires in</div>
+								<div className="col-6 me-2">Cookie</div>
+								<div className="col-3">asdadasdasda</div>
 
 								{accounts
 									? accounts.map((account, index) => {
