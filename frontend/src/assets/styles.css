@@ -2,6 +2,10 @@ textarea {
 	resize: none;
 }
 
+.no-wrap {
+  white-space: nowrap;
+}
+
 .switch-size {
 	width: 42px !important;
 	height: 21px;
