@@ -7,3 +7,5 @@ __pycache__
 accounts.js
 firebaseConfig.js
 nodejs-backend
+.env
+old-backend
