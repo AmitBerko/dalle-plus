@@ -325,13 +325,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 					open modal
 				</button>
 			</div> */}
-			<button
+			{/* <button
 				onClick={() => {
 					console.log(accounts)
 				}}
 			>
 				print accounts
-			</button>
+			</button> */}
 
 			{/* <button
         onClick={() =>
@@ -344,7 +344,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
         change user
       </button> */}
 
-			<button onClick={testing}>test button</button>
+			{/* <button onClick={testing}>test button</button>
 			<button
 				onClick={() =>
 					dispatch(
@@ -357,7 +357,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				}
 			>
 				test Redux
-			</button>
+			</button> */}
 			{/* <h6 className="display-6">{JSON.stringify(accounts)}</h6> */}
 		</>
 	)
