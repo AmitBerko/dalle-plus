@@ -57,15 +57,14 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		socket.on('imagesGenerated', (data) => {
 			console.log(`data is`, data)
 			const urls = data.urls
-      if (data.urls.length === 0 || !data.urls) return
 			const cookie = data.cookie
-			// console.log(`${cookie.slice(0, 5)} generated`)
-			setUrlArray((prevUrls) => prevUrls.concat(urls))
 			const accountIndex = accounts.findIndex((account) => account.cookie === cookie)
-			console.log(`the cookie is ${cookie.slice(0, 5)} and index is ${accountIndex}`)
-
 			dispatch(updateAccount({ accountIndex, newValues: { isGenerating: false } }))
 			setIsGenerating(false)
+			if (!urls) return
+			// console.log(`${cookie.slice(0, 5)} generated`)
+			setUrlArray((prevUrls) => prevUrls.concat(urls))
+			console.log(`the cookie is ${cookie.slice(0, 5)} and index is ${accountIndex}`)
 		})
 
 		socket.on('imagesFailed', (data) => {
