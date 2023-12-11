@@ -1,55 +1,82 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
-import { accounts, apiServers } from '../accounts'
 import { db } from '../firebaseConfig'
-import { ref, set, onValue, query, update } from 'firebase/database'
+import { ref, get, onValue, query, update } from 'firebase/database'
 import AccountsModal from '../components/AccountsModal'
+import io from 'socket.io-client'
+import { useSelector, useDispatch } from 'react-redux'
+import { setAccounts, updateAccount, addAccount } from '../redux/accountsSlice'
 
-function Homepage({ setIsLoggedIn, userUid, userName }) {
-	const [urlArray, setUrlArray] = useState([
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-		// 'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE',
-	])
-	const [filteredUrlArray, setFilteredUrlArray] = useState([])
+const socket = io('https://super-dalle3.onrender.com')
+// const socket = io('localhost:8080')
+
+function Homepage({ setIsLoggedIn, userUid }) {
+	const accounts = useSelector((state) => state.accounts.value)
+	const dispatch = useDispatch()
+	// const { setAccounts, updateAccount, fetchAccounts } = useFirebaseAccounts(userUid)
+	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
-	const [doFilter, setDoFilter] = useState(false)
+	const [isSlowMode, setIsSlowMode] = useState(true)
 	const [isGenerating, setIsGenerating] = useState(false)
 	const [user, setUser] = useState(null)
-	const [accounts, setAccounts] = useState([])
+	const accountsRef = `users/${userUid}/accounts`
 
-	useEffect(() => { // Getting initial user data
-		const userQuery = query(ref(db, `users/${userUid}`))
-		onValue(userQuery, (snapshot) => {
-			if (!snapshot.exists) {
-				console.log(`user doesnt exist. (this messsage shouldnt appear)`)
-				return
+	// Getting initial user data
+	useEffect(() => {
+		const setInitialData = async () => {
+			setUser(userUid)
+			const userRef = ref(db, `users/${userUid}`)
+			const snapshot = await get(userRef)
+			if (snapshot.exists) {
+				setUser(snapshot.val())
 			}
-			setUser(snapshot.val())
-		})
+		}
+
+		setInitialData()
 	}, [])
 
-	const curRef = `users/${userUid}/accounts`
+	useEffect(() => {
+		const updateDb = () => {
+			try {
+				update(ref(db, `users/${userUid}`), { accounts: accounts })
+			} catch (error) {
+				console.error(`error when updating db: `, error)
+			}
+		}
 
-	const errorImages = [
-		'https://tse1.mm.bing.net/th/id/OIG.MScRbcNm04kmR5C28zmE', // Sad robot - blocked by bing
-		'https://tse4.mm.bing.net/th/id/OIG.H0s1rsgj0HtBWeUq3i5S', // Skull - account expired / banned
-		'https://tse2.mm.bing.net/th/id/OIG.bri9oao3CDK8wMHi87jP', // Question mark - idk, shouldn't appear
-	]
+		updateDb()
+		const generatingAccounts = accounts.filter((account) => account.isGenerating)
+		setGeneratingCount(generatingAccounts.length)
+	}, [accounts])
+
+	useEffect(() => {
+		socket.on('connect', () => {
+			console.log('client connect')
+		})
+
+		socket.on('imagesGenerated', (data) => {
+			console.log(`data is`, data)
+			const urls = data.urls
+			const cookie = data.cookie
+			// console.log(`${cookie.slice(0, 5)} generated`)
+			setUrlArray((prevUrls) => prevUrls.concat(urls))
+			const accountIndex = accounts.findIndex((account) => account.cookie === cookie)
+			console.log(`the cookie is ${cookie.slice(0, 5)} and index is ${accountIndex}`)
+
+			dispatch(updateAccount({ accountIndex, newValues: { isGenerating: false } }))
+			setIsGenerating(false)
+		})
+
+		socket.on('imagesFailed', (data) => {
+			const cookie = data.cookie
+			const accountIndex = accounts.findIndex((account) => account.cookie === cookie)
+			dispatch(updateAccount({ accountIndex, newValues: { isGenerating: false } }))
+		})
+
+		return () => {
+			socket.off('imagesGenerated')
+		}
+	}, [socket])
 
 	useEffect(() => {
 		window.addEventListener('beforeunload', handleUnload)
@@ -59,111 +86,65 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 		}
 	}, [])
 
-	useEffect(() => {
-		const filteredUrls = urlArray.filter((image) => !errorImages.includes(image))
-		// Set isGenerating to true either if there's a good image, or 50% of accounts has finished generating
-		if (filteredUrls.length > 0) setIsGenerating(false)
-		if (generatingCount <= parseInt(accounts.length * 0.5)) setIsGenerating(false)
-    // if (generatingCount === 0) setIsGenerating(false)
-		setFilteredUrlArray(filteredUrls)
-	}, [urlArray])
-
-	let curApiServer
+	// useEffect(() => {
+	//   const filteredUrls = urlArray.filter((image) => !errorImages.includes(image))
+	//   // Set isGenerating to true either if there's a good image, or 50% of accounts has finished generating
+	//   if (filteredUrls.length > 0) setIsGenerating(false)
+	//   if (generatingCount <= parseInt(accounts.length * 0.5)) setIsGenerating(false)
+	//   // if (generatingCount === 0) setIsGenerating(false)
+	//   setFilteredUrlArray(filteredUrls)
+	// }, [urlArray])
 
 	const handleGenerate = () => {
 		if (!prompt) return
 		setUrlArray([])
 		setIsGenerating(true)
-		for (let index = 0; index < accounts.length; index++) {
-			const account = accounts[index] // Get the account
-			console.log(`the account is`, account)
-			if (getIsGenerating(account.cookie)) {
-				console.log(`${account.cookie.slice(0, 5)} is still generating. skipping it`)
-				continue // Skip this iteration if the account is already generating
-			}
-
-			updateGeneratingStatus(account.cookie, true) // Set "isGenerating" to true for that account
-			setGeneratingCount((prev) => prev + 1)
-			curApiServer = apiServers[index % apiServers.length]
-			console.log(`sending request from ${account.cookie.slice(0, 5)} to ${curApiServer}`)
-			axios
-				.post(`${curApiServer}/generate-images`, { prompt, account })
-				.then((response) => {
-					updateGeneratingStatus(account.cookie, false)
-					setGeneratingCount((prev) => prev - 1)
-					let newUrls = response.data[account.cookie]
-					console.log(`${account.cookie.slice(0, 5)} generated ${[newUrls]}`)
-
-					if (!newUrls || newUrls === undefined) {
-						console.log('returning - going outside the function')
-						return
-					}
-					setUrlArray((prevUrlArray) => [...prevUrlArray, ...response.data[account.cookie]])
-				})
-				.catch((error) => {
-					updateGeneratingStatus(account.cookie, false)
-					setGeneratingCount((prev) => prev - 1)
-					console.error(`Error for ${account.cookie.slice(0, 5)}: ${error}`)
-				})
-		}
+		socket.emit('generateImages', { prompt, accounts, isSlowMode })
+		const updatedAccounts = accounts.map((account) => {
+			return { ...account, isGenerating: true }
+		})
+		dispatch(setAccounts(updatedAccounts))
+		// // Set every account's isGenerating status to true
+		// // setAccounts((prevAccounts) => {
+		// //   const result = prevAccounts.map((account) => {
+		// //     return { ...account, isGenerating: true }
+		// //   })
+		// //   console.log(result)
+		// //   return result
+		// // })
+		// const userRef = ref(db, `users/${userUid}`)
+		// update(userRef, { accounts })
+		// setGeneratingCount(accounts.length)
 	}
 
 	function updateGeneratingStatus(cookie, isGenerating) {
-		if (cookie === undefined || cookie === '') return
-    const accountIndex = accounts.findIndex(acc => acc.cookie === cookie)
-		const newAccountRef = ref(db, `${curRef}/${accountIndex}`)
-
-		update(newAccountRef, {cookie: cookie, isGenerating: isGenerating})
+		// if (cookie === undefined || cookie === '') return
+		// const accountIndex = accounts.findIndex((acc) => acc.cookie === cookie)
+		// if (accountIndex === -1) {
+		// 	console.log('Account not found')
+		// 	return
+		// }
+		// const updatedAccountRef = ref(db, `${accountsRef}/${accountIndex}`)
+		// // Update isGenerating value on firebase and accounts state
+		// // setAccounts((prevAccounts) => {
+		// //   prevAccounts[accountIndex].isGenerating = isGenerating
+		// //   return prevAccounts
+		// // })
+		// update(updatedAccountRef, { cookie, isGenerating })
 	}
 
 	function getIsGenerating(cookie) {
 		const account = accounts.find((acc) => acc.cookie === cookie)
-    console.log(`account:` + account + `s isgenerating is: ${account.isGenerating}`)
+		if (!account) return
+		console.log(`account:`, account, `s isgenerating is: ${account.isGenerating}`)
 		return account.isGenerating
-
-		// const queryRef = query(ref(db, `${curRef}/${authCookie}`))
-		// let generating
-		// onValue(queryRef, (snapshot) => {
-		// 	if (!snapshot.exists()) {
-		// 		console.log("Snapshot doesn't exist")
-		// 		return
-		// 	}
-		// 	generating = snapshot.val().isGenerating
-		// })
-		// return generating
 	}
 
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
-		accounts.forEach((account) => {
-			updateGeneratingStatus(account.cookie, false)
-		})
-	}
-
-	function pingApiServers() {
-		const pingRequests = apiServers.map(async (server) => {
-			return axios
-				.get(`${server}/ping`)
-				.then((response) => {
-					if (response.status === 200) {
-						console.log(`${server} is alive.`)
-					} else {
-						console.log(`${server} returned status ${response.status}.`)
-					}
-				})
-				.catch((error) => {
-					console.error(`Error while pinging ${server}: ${error}`)
-				})
-		})
-
-		// Wait for all ping requests to complete
-		Promise.all(pingRequests)
-			.then(() => {
-				alert('All servers are currently up!')
-			})
-			.catch((error) => {
-				alert('An error occurred while pinging servers:', error)
-			})
+		// accounts.forEach((account) => {
+		// 	updateGeneratingStatus(account.cookie, false)
+		// })
 	}
 
 	function printUser(userUid) {
@@ -178,6 +159,10 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 		})
 	}
 
+	function testing() {
+		dispatch(updateAccount({ accountIndex: 0, newValues: { isGenerating: false } }))
+	}
+
 	return (
 		<>
 			{/* Title and prompt section */}
@@ -185,11 +170,16 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				<div className="row mb-3 mb-lg-4 position-relative">
 					<p className="col-12 fs-6 position-absolute mt-3">
 						{user ? `Hello ${user.name}` : ''}{' '}
-						<a style={{ cursor: 'pointer', color: 'lightblue' }} onClick={() => setIsLoggedIn(false)}>
+						<a
+							style={{ cursor: 'pointer', color: 'lightblue' }}
+							onClick={() => setIsLoggedIn(false)}
+						>
 							Log out
 						</a>
 					</p>
-					<h1 className="text-center display-4 fw-bold mx-auto pt-3 pt-md-2 mt-4 mt-md-2 col-12">Super Dalle-3</h1>
+					<h1 className="text-center display-4 fw-bold mx-auto pt-4 pt-md-3 mt-4 mt-md-2 col-12">
+						Super Dalle-3
+					</h1>
 				</div>
 				<div className="row">
 					<div className="col-12">
@@ -210,8 +200,16 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 								rows="4"
 							></textarea>
 							{isGenerating ? (
-								<button className="btn btn-primary btn-lg d-none d-sm-inline" style={{ width: '175px' }} disabled>
-									<span className="spinner-border spinner-size me-2" role="status" aria-hidden="true"></span>
+								<button
+									className="btn btn-primary btn-lg d-none d-sm-inline"
+									style={{ width: '175px' }}
+									disabled
+								>
+									<span
+										className="spinner-border spinner-size me-2"
+										role="status"
+										aria-hidden="true"
+									></span>
 									Generating...
 								</button>
 							) : (
@@ -227,7 +225,11 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 					</div>
 					<div className="col-12 mt-2 mt-lg-0">
 						{isGenerating ? (
-							<button onClick={handleGenerate} disabled className="btn btn-primary btn-lg w-100 d-sm-none">
+							<button
+								onClick={handleGenerate}
+								disabled
+								className="btn btn-primary btn-lg w-100 d-sm-none"
+							>
 								<span className="spinner-border spinner-size me-2"></span>
 								Generating...
 							</button>
@@ -241,9 +243,7 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				{/* Add account - Big */}
 				<div className="row mt-3 mb-2 d-none d-md-flex">
 					<div className="col">
-						<button className="btn btn-danger d-none w-100 d-md-block" onClick={pingApiServers}>
-							Ping Api Servers
-						</button>
+						<button className="btn btn-danger d-none w-100 d-md-block">Ping Api Servers</button>
 					</div>
 					<div className="col">
 						<button
@@ -257,22 +257,26 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 				</div>
 				{/* Add account - Small */}
 				<div className="mt-4 mb-2 d-md-none">
-					<button className="btn btn-success w-100" data-bs-toggle="modal" data-bs-target="#accounts-modal">
+					<button
+						className="btn btn-success w-100"
+						data-bs-toggle="modal"
+						data-bs-target="#accounts-modal"
+					>
 						Browse Accounts
 					</button>
 				</div>
 				{/* Ping button - Small */}
-				<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={pingApiServers}>
-					Ping Api Servers
-				</button>
+				<button className="btn btn-danger mb-2 col-12 d-md-none">Ping Api Servers</button>
 				{/* Accounts / images / Checkbox */}
 				<div className="row">
 					<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
-						<div className="fs-3 text-center">Successful images: {filteredUrlArray.length}</div>
+						<div className="fs-3 text-center">Successful images: {urlArray.length}</div>
 					</div>
 					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
 						<div className="fs-3 text-center">
-							{accounts ? `Now generating: ${generatingCount} / ${accounts.length}` : 'Now generating: 0 / 0'}
+							{accounts
+								? `Now generating: ${generatingCount} / ${accounts.length}`
+								: 'Now generating: 0 / 0'}
 						</div>
 					</div>
 
@@ -282,12 +286,12 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 								className="form-check-input me-2 me-lg-3 switch-size"
 								type="checkbox"
 								role="switch"
-								checked={doFilter}
-								onChange={() => setDoFilter((prev) => !prev)}
+								checked={isSlowMode}
+								onChange={() => setIsSlowMode((prev) => !prev)}
 								id="imageFilterSwitch"
 							/>
 							<label className="form-check-label fs-3" htmlFor="imageFilterSwitch">
-								Filter Bad Images
+								Slow Mode
 							</label>
 						</div>
 					</div>
@@ -298,43 +302,63 @@ function Homepage({ setIsLoggedIn, userUid, userName }) {
 			<section>
 				<div className="container-fluid px-2 px-md-5">
 					<div className="row justify-content-center">
-						{doFilter
-							? filteredUrlArray.map((url, index) => {
-									return (
-										<img
-											key={index}
-											src={url}
-											alt={url}
-											className="img-fluid generated-image p-2 m-0"
-											onClick={() => window.open(url, '_blank')}
-											style={{ cursor: 'pointer' }}
-										/>
-									)
-							  })
-							: urlArray.map((url, index) => {
-									return (
-										<img
-											key={index}
-											src={url}
-											alt={url}
-											className="img-fluid generated-image p-2 m-0"
-											onClick={() => window.open(url, '_blank')}
-											style={{ cursor: 'pointer' }}
-										/>
-									)
-							  })}
+						{urlArray.map((url, index) => {
+							return (
+								<img
+									key={index}
+									src={`${url}?w=270&h=270`}
+									alt={url}
+									className="img-fluid generated-image p-2 m-0"
+									onClick={() => window.open(url, '_blank')}
+									style={{ cursor: 'pointer' }}
+								/>
+							)
+						})}
 					</div>
 				</div>
 			</section>
 
-			<AccountsModal userUid={userUid} accounts={accounts} setAccounts={setAccounts} />
+			<AccountsModal userUid={userUid} />
 
 			{/* <div>
 				<button className="btn btn-warning" data-bs-toggle="modal" data-bs-target="#accounts-modal">
 					open modal
 				</button>
-			</div>
-			<button onClick={() => updateGeneratingStatus('abcde', false)}>print user</button> */}
+			</div> */}
+			<button
+				onClick={() => {
+					console.log(accounts)
+				}}
+			>
+				print accounts
+			</button>
+
+			{/* <button
+        onClick={() =>
+          updateGeneratingStatus(
+            '1GUivhY-8ozgPkE1kL1lKVQpklGbylujaaDcEuMViTBEykuVBVHWEcg9KyhuQCSWPVNIU1_ksTfYzNdmeHIso3XJIJFOcZFuOhZaVHxWChq-JkRuE2lIjIBOaszRtF6eyvWyAi1uzQG8lXg3ayAXdepUBnLo36UOPoQxlLhOlus54B9pcd0tAMA6orNe7I5KOoKNMsiOD1JHJipJ2ONJTGg',
+            false
+          )
+        }
+      >
+        change user
+      </button> */}
+
+			<button onClick={testing}>test button</button>
+			<button
+				onClick={() =>
+					dispatch(
+						addAccount({
+							cookie: Math.floor(Math.random() * 1000),
+							isGenerating: false,
+							creationDate: '123',
+						})
+					)
+				}
+			>
+				test Redux
+			</button>
+			{/* <h6 className="display-6">{JSON.stringify(accounts)}</h6> */}
 		</>
 	)
 }
