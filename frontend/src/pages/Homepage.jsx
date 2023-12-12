@@ -142,9 +142,11 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
-		// accounts.forEach((account) => {
-		// 	updateGeneratingStatus(account.cookie, false)
-		// })
+		const updatedAccounts = accounts.map((account) => {
+			return { ...account, isGenerating: false }
+		})
+
+    dispatch(setAccounts(updatedAccounts))
 	}
 
 	function printUser(userUid) {
