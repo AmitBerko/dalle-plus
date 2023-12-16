@@ -27,17 +27,17 @@ class BingApi {
 		try {
 			const payload = `q=${encodeURIComponent(prompt)}`
 			const credits = await this.getCredits()
-      if (!credits) {
-        throw 'Invalid cookie'
-      }
-			console.log(`${credits} credits`)
+			if (!credits) {
+				throw `${this.cookie.slice(0, 5)} is an invalid cookie`
+			}
+			// console.log(`${credits} credits`)
 			// If the account ran out of credits, use slowmode, otherwise let the parameter determine
 			let response = await this.#sendRequest(credits > 0 ? isSlowMode : true, payload)
-			console.log(`status is ${response.status}`)
+			// console.log(`status is ${response.status}`)
 			if (response.status === 200) {
 				const responseHtml = await response.text()
 				if (responseHtml.includes('gil_err_tc')) {
-          throw 'Blocked prompt'
+					throw 'Blocked prompt'
 				}
 				throw 'Either a problem with bing or your account is already generating'
 			}
@@ -60,12 +60,13 @@ class BingApi {
 
 			// console.log('response status is', response.status)
 			const eventId = response.headers.get('x-eventid')
-			console.log(`eventId is ${eventId}`)
+			// console.log(`eventId is ${eventId}`)
 
-			console.log('now moving to getting the images:')
+			// console.log('Waiting for images:')
 			return await this.#retrieveImages(eventId)
 		} catch (error) {
 			console.log(`error is ${error}`)
+			return []
 		}
 	}
 
@@ -77,6 +78,8 @@ class BingApi {
 		})
 		const html = await response.text()
 		const $ = cheerio.load(html)
+    // console.log(`the html is of ${this.cookie.slice(0, 5)}`, html.slice(0, 300))
+    // console.log('\n \n')
 		return $('#token_bal').text()
 	}
 
@@ -108,7 +111,7 @@ class BingApi {
 	async #retrieveImages(eventId) {
 		// Retrieve the images after they were created
 		try {
-			process.stdout.write('Waiting for results')
+			// process.stdout.write('Waiting for results')
 			while (true) {
 				const images = await fetch(`${bingUrl}/images/create/async/results/1-${eventId}`, {
 					headers: this.#headers,
@@ -119,13 +122,17 @@ class BingApi {
 				const html = await images.text()
 
 				if (html.includes(`"errorMessage":"Pending"`)) {
-					throw 'Error occured'
+					throw `Error occured for ${this.cookie.slice(0, 5)}`
 				}
 
 				let results = []
 
-				if (html === '') {
-					process.stdout.write('.')
+				if (
+					html === '' ||
+					html.includes('GenerativeImagesStatusPage') ||
+					html.includes("Bing isn't available")
+				) {
+					// process.stdout.write('.')
 
 					// Wait for 4 seconds and try again
 					await new Promise((resolve) => setTimeout(resolve, 4000))
@@ -140,11 +147,16 @@ class BingApi {
 					results.push(goodLink)
 				}
 
-				console.log(results)
+				// console.log(results)
+				if (!results || results.length === 0) {
+					console.log(`theres probably an error, results are `, results)
+					console.log(`and the html is`, html)
+				}
 				return results
 			}
 		} catch (error) {
 			console.log(`Error in retrieveImages: ${error}`)
+			return []
 		}
 	}
 }
