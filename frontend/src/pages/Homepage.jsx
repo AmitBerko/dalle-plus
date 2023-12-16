@@ -49,7 +49,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		updateDb()
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
 		setGeneratingCount(generatingAccounts.length)
-		}, [accounts])
+	}, [accounts])
 
 	useEffect(() => {
 		const unsubscribe = onValue(imagesRef, (snapshot) => {
@@ -88,8 +88,8 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	const handleGenerate = () => {
 		if (!prompt) return
-    const notGeneratingAccounts = accounts.filter(account => !account.isGenerating)
-    console.log(`notGeneratingAccounts are`, notGeneratingAccounts)
+		const notGeneratingAccounts = accounts.filter((account) => !account.isGenerating)
+		console.log(`notGeneratingAccounts are`, notGeneratingAccounts)
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
 		const updatedAccounts = accounts.map((account) => {
 			return { ...account, isGenerating: true }
@@ -99,20 +99,20 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
-    // console.log(`accounts before update is `, accounts)
+		// console.log(`accounts before update is `, accounts)
 		// const updatedAccounts = accounts.map((account) => {
 		// 	return { ...account, isGenerating: false }
 		// })
 
-    // console.log(`the updated accounts are:`, updatedAccounts)
+		// console.log(`the updated accounts are:`, updatedAccounts)
 
 		// dispatch(setAccounts(updatedAccounts))
 		clearImages()
 	}
 
-  function clearImages() {
-    socket.emit('clearImages', { userUid })
-  }
+	function clearImages() {
+		socket.emit('clearImages', { userUid })
+	}
 
 	return (
 		<>
@@ -218,8 +218,10 @@ function Homepage({ setIsLoggedIn, userUid }) {
 						Browse Accounts
 					</button>
 				</div>
-				{/* Ping button - Small */}
-				<button className="btn btn-danger mb-2 col-12 d-md-none">Ping Api Servers</button>
+				{/* Clear Images - Small */}
+				<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={clearImages}>
+					Clear Images
+				</button>
 				{/* Accounts / images / Checkbox */}
 				<div className="row">
 					<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
@@ -271,7 +273,6 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				</div>
 			</section>
 			<AccountsModal userUid={userUid} />
-      <button onClick={() => console.log(accounts)}>print account</button>
 		</>
 	)
 }
