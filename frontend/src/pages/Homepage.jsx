@@ -74,9 +74,9 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		})
 
 		return () => {
-			socket.off('imagesGenerated')
+			socket.off('finishedGeneration')
 		}
-	}, [socket])
+	}, [socket, accounts])
 
 	useEffect(() => {
 		window.addEventListener('beforeunload', handleUnload)
@@ -99,11 +99,14 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
-		const updatedAccounts = accounts.map((account) => {
-			return { ...account, isGenerating: false }
-		})
+    // console.log(`accounts before update is `, accounts)
+		// const updatedAccounts = accounts.map((account) => {
+		// 	return { ...account, isGenerating: false }
+		// })
 
-		dispatch(setAccounts(updatedAccounts))
+    // console.log(`the updated accounts are:`, updatedAccounts)
+
+		// dispatch(setAccounts(updatedAccounts))
 		clearImages()
 	}
 
@@ -268,6 +271,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				</div>
 			</section>
 			<AccountsModal userUid={userUid} />
+      <button onClick={() => console.log(accounts)}>print account</button>
 		</>
 	)
 }
