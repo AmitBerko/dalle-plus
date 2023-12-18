@@ -5,7 +5,10 @@ export const accountsSlice = createSlice({
 	initialState: { value: [] },
 	reducers: {
 		setAccounts: (state, action) => {
-			state.value = action.payload
+			return {
+				...state,
+				value: action.payload,
+			}
 		},
 
 		updateAccount: (state, action) => {
@@ -13,26 +16,33 @@ export const accountsSlice = createSlice({
 			const updatedAccounts = state.value.map((account, index) => {
 				return index === accountIndex ? { ...account, ...newValues } : account
 			})
-			state.value = updatedAccounts
+			return {
+				...state,
+				value: updatedAccounts,
+			}
 		},
 
 		addAccount: (state, action) => {
 			const accountData = action.payload
-			console.log(action.payload)
 			const updatedAccounts = [accountData, ...state.value]
-			state.value = updatedAccounts
+			return {
+				...state,
+				value: updatedAccounts,
+			}
 		},
 
 		removeAccount: (state, action) => {
-      const cookie = action.payload
-      console.log(`cookie is`, cookie)
-      const updatedAccounts = state.value.filter((account) => account.cookie !== cookie )
-
-      state.value = updatedAccounts
-    },
+			const cookie = action.payload
+			const updatedAccounts = state.value.filter((account) => account.cookie !== cookie)
+			return {
+				...state,
+				value: updatedAccounts,
+			}
+		},
 	},
 })
 
-export const { setAccounts, updateAccount, addAccount, removeAccount } = accountsSlice.actions
+export const { setAccounts, updateAccount, addAccount, removeAccount, getAccounts } =
+	accountsSlice.actions
 
 export default accountsSlice.reducer
