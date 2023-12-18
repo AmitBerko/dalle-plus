@@ -50,7 +50,7 @@ const io = new Server(server, {
 io.on('connection', (socket) => {
 	console.log('user joined')
 
-  let allUrls = []
+	let allUrls = []
 
 	socket.on('clearImages', async (data) => {
 		const { userUid } = data
@@ -68,12 +68,15 @@ io.on('connection', (socket) => {
 		allUrls = []
 		if (imagesSnapshot.exists()) {
 			allUrls = imagesSnapshot.val()
-      console.log(`the val is`, allUrls)
+			console.log(`the val is`, allUrls)
 		}
 
-		const requests = accounts.map(async (account) => {
+		const requests = accounts.map(async (account, index) => {
+			const accountRef = db.ref(`users/${userUid}/accounts/${index}`)
 			try {
 				console.log(`${account.cookie.slice(0, 5)} has started generating`)
+				await accountRef.update({ isGenerating: true })
+
 				const bingApi = new BingApi(account.cookie)
 				const urls = await bingApi.createImages(prompt, isSlowMode)
 				allUrls.push(...urls)
@@ -82,8 +85,8 @@ io.on('connection', (socket) => {
 			} catch (error) {
 				console.log('error is ', error)
 			} finally {
-				socket.emit('finishedGeneration', { cookie: account.cookie })
-      }
+				await accountRef.update({ isGenerating: false })
+			}
 		})
 
 		Promise.all(requests)

@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { db } from '../firebaseConfig'
-import { ref, get, onValue, update } from 'firebase/database'
+import { ref, get, onValue } from 'firebase/database'
 import AccountsModal from '../components/AccountsModal'
 import { useSelector, useDispatch } from 'react-redux'
-import { setAccounts, updateAccount } from '../redux/accountsSlice'
+import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
 
 // const backendUrl = 'http://localhost:8080'
@@ -38,45 +38,28 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [])
 
 	useEffect(() => {
-		const updateDb = () => {
-			try {
-				update(ref(db, `users/${userUid}`), { accounts: accounts })
-			} catch (error) {
-				console.error(`error when updating db: `, error)
-			}
-		}
-
-		updateDb()
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
 		setGeneratingCount(generatingAccounts.length)
 	}, [accounts])
 
 	useEffect(() => {
-		const unsubscribe = onValue(imagesRef, (snapshot) => {
+		const imagesUnsubscribe = onValue(imagesRef, (snapshot) => {
 			const data = snapshot.val()
 			setUrlArray(data)
-			console.log(`the unsub data is: `, data)
+			console.log(`the images unsub data is: `, data)
 		})
 
-		return () => unsubscribe()
-	}, [userUid])
-
-	useEffect(() => {
-		socket.on('connect', () => {
-			console.log('client connect')
-		})
-
-		socket.on('finishedGeneration', (data) => {
-			const cookie = data.cookie
-			const accountIndex = accounts.findIndex((account) => account.cookie === cookie)
-			dispatch(updateAccount({ accountIndex, newValues: { isGenerating: false } }))
-			setIsGenerating(false)
+		const accountsUnsubscribe = onValue(accountsRef, async (snapshot) => {
+			const data = await snapshot.val()
+      dispatch(setAccounts(data))
+			console.log(`the accounts unsub data is `, data)
 		})
 
 		return () => {
-			socket.off('finishedGeneration')
+			imagesUnsubscribe()
+			accountsUnsubscribe()
 		}
-	}, [socket, accounts])
+	}, [userUid])
 
 	useEffect(() => {
 		window.addEventListener('beforeunload', handleUnload)
@@ -91,13 +74,8 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		const notGeneratingAccounts = accounts.filter((account) => !account.isGenerating)
 		console.log(`notGeneratingAccounts are`, notGeneratingAccounts)
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
-		const updatedAccounts = accounts.map((account) => {
-			return { ...account, isGenerating: true }
-		})
-		dispatch(setAccounts(updatedAccounts))
 	}
 
-	// Set all accounts' isGenerating to false when exiting a page
 	function handleUnload() {
 		// console.log(`accounts before update is `, accounts)
 		// const updatedAccounts = accounts.map((account) => {
