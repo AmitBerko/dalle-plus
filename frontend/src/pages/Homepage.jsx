@@ -37,6 +37,14 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		setInitialData()
 	}, [])
 
+  useEffect(() => {
+    if (generatingCount === accounts.length && accounts.length !== 0) {
+      setIsGenerating(true)
+    } else {
+      setIsGenerating(false)
+    }
+  }, [generatingCount])
+
 	useEffect(() => {
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
 		setGeneratingCount(generatingAccounts.length)
