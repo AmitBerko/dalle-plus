@@ -36,7 +36,7 @@ function AccountsModal({ userUid }) {
 
 			const newAccount = { cookie, isGenerating: false, creationDate }
 			dispatch(addAccount(newAccount))
-			updateDb([newAccount, ...accounts])
+			updateDb([...accounts, newAccount])
 			setCookieInput('')
 		} catch (error) {
 			console.log(`error is ${error}`)
@@ -86,7 +86,7 @@ function AccountsModal({ userUid }) {
 							</div>
 
 							{accounts
-								? accounts.map((account, index) => {
+								? accounts.slice().reverse().map((account, index) => {
 										return (
 											<Account
 												key={index}
