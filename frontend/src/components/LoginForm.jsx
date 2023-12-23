@@ -5,10 +5,11 @@ import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
 
-function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid, setUserName }) {
+function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid }) {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
-  const dispatch = useDispatch()
+	const [message, setMessage] = useState('')
+	const dispatch = useDispatch()
 
 	const fetchAccounts = async (userUid) => {
 		const accountsRef = ref(db, `users/${userUid}/accounts`)
@@ -38,17 +39,18 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid, setUserName }) {
 			const user = userCred.user
 			console.log(`user signed in: `, user)
 			setUserUid(user.uid)
-      await fetchAccounts(user.uid)
+			await fetchAccounts(user.uid)
 			setIsLoggedIn(true)
 		} catch (error) {
+			setMessage('Account does not exist')
 			console.log('crashed because of ', error)
 		}
 	}
 
 	return (
 		<div className="container position-absolute top-50 start-50 translate-middle">
-			<form className="col-lg-6 mx-auto p-4 pb-md-4 p-md-5 pt-0 pt-md-0 border rounded-3 bg-body-tertiary">
-				<div className="display-6 d-flex fw-bold my-4 text-center justify-content-center h-100">
+			<form className="col-lg-6 mx-auto p-3 p-sm-4 border rounded-3 bg-body-tertiary">
+				<div className="display-6 d-flex fw-bold mb-3 mb-sm-4 text-center justify-content-center h-100">
 					Login to Super Dalle-3
 				</div>
 				<div className="form-floating mb-3">
@@ -81,6 +83,7 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid, setUserName }) {
 					Login
 				</button>
 				<hr className="my-3" />
+				{message && <p className="alert alert-danger p-2 px-3 mb-2">{message}</p>}
 				<small className="text-body-secondary fs-6">
 					Don't have an account?{' '}
 					<a style={{ cursor: 'pointer', color: 'lightblue' }} onClick={() => setShowLogin(false)}>
