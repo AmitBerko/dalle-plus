@@ -6,8 +6,8 @@ import { useSelector, useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
 
-const backendUrl = 'http://localhost:8080'
-// const backendUrl = 'https://super-dalle3.onrender.com'
+// const backendUrl = 'http://localhost:8080'
+const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
@@ -46,6 +46,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
   }, [generatingCount])
 
 	useEffect(() => {
+    if (!accounts) return
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
 		setGeneratingCount(generatingAccounts.length)
 	}, [accounts])
