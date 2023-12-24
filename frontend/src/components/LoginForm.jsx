@@ -42,7 +42,7 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid }) {
 			await fetchAccounts(user.uid)
 			setIsLoggedIn(true)
 		} catch (error) {
-			setMessage('Account does not exist')
+			setMessage('Incorrect login credentials. Please verify your email and password')
 			console.log('crashed because of ', error)
 		}
 	}

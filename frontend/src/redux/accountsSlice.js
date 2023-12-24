@@ -24,7 +24,7 @@ export const accountsSlice = createSlice({
 
 		addAccount: (state, action) => {
 			const accountData = action.payload
-			const updatedAccounts = [...state.value, accountData]
+			const updatedAccounts = [...(state.value || []), accountData]
 			return {
 				...state,
 				value: updatedAccounts,

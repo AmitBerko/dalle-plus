@@ -26,17 +26,16 @@ function AccountsModal({ userUid }) {
 
 		try {
 			const creationDate = Date.now()
-			const match = cookieInput.match(/_U\s*(.*?)(?=\s*-{3,})/) // Just to save some time
+			const match = cookieInput.match(/_U\s*(.*?)(?=\s*-{3,})/) // Just to save myself time
 			const cookie = match ? match[1] : cookieInput
-			console.log(cookie)
-			if (accounts.some((account) => account.cookie === cookie)) {
+			if (accounts && accounts.some((account) => account.cookie === cookie)) {
 				console.log('cookie already exists')
 				return
 			}
 
 			const newAccount = { cookie, isGenerating: false, creationDate }
 			dispatch(addAccount(newAccount))
-			updateDb([...accounts, newAccount])
+			updateDb([...(accounts || []), newAccount])
 			setCookieInput('')
 		} catch (error) {
 			console.log(`error is ${error}`)
