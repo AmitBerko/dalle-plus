@@ -37,16 +37,16 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		setInitialData()
 	}, [])
 
-  useEffect(() => {
-    if (generatingCount === accounts.length && accounts.length !== 0) {
-      setIsGenerating(true)
-    } else {
-      setIsGenerating(false)
-    }
-  }, [generatingCount])
+	useEffect(() => {
+		if (generatingCount === accounts.length && accounts.length !== 0) {
+			setIsGenerating(true)
+		} else {
+			setIsGenerating(false)
+		}
+	}, [generatingCount])
 
 	useEffect(() => {
-    if (!accounts) return
+		if (!accounts) return
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
 		setGeneratingCount(generatingAccounts.length)
 	}, [accounts])
@@ -59,7 +59,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 		const accountsUnsubscribe = onValue(accountsRef, async (snapshot) => {
 			const data = await snapshot.val()
-      dispatch(setAccounts(data))
+			dispatch(setAccounts(data))
 		})
 
 		return () => {
@@ -78,7 +78,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	const handleGenerate = () => {
 		if (!prompt) return
-		const notGeneratingAccounts = accounts.filter((account) => !account.isGenerating)
+		const notGeneratingAccounts = accounts
+			.map((account, originalIndex) => {
+				if (account.isGenerating) return null
+				return { ...account, originalIndex }
+			})
+			.filter((account) => account !== null)
+		console.log(`sent `, notGeneratingAccounts)
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
 	}
 

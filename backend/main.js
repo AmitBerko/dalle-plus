@@ -71,8 +71,8 @@ io.on('connection', (socket) => {
 			console.log(`the val is`, allUrls)
 		}
 
-		const requests = accounts.map(async (account, index) => {
-			const accountRef = db.ref(`users/${userUid}/accounts/${index}`)
+		const requests = accounts.map(async (account) => {
+			const accountRef = db.ref(`users/${userUid}/accounts/${account.originalIndex}`)
 			try {
 				console.log(`${account.cookie.slice(0, 5)} has started generating`)
 				await accountRef.update({ isGenerating: true })
