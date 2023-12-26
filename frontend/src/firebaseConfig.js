@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app'
 import { getDatabase } from 'firebase/database'
-import { getAuth } from 'firebase/auth'
+import { browserLocalPersistence, getAuth, setPersistence } from 'firebase/auth'
 
 const firebaseConfig = {
 	apiKey: process.env.REACT_APP_API_KEY,
@@ -15,5 +15,6 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig)
 const db = getDatabase(firebaseApp) // Initialize the Realtime Database
 const auth = getAuth(firebaseApp)
+setPersistence(auth, browserLocalPersistence)
 
 export { db, auth }

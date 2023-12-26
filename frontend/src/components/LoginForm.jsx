@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { auth, db } from '../firebaseConfig'
-import { ref, get } from 'firebase/database'
+import { ref, get, update } from 'firebase/database'
 import { signInWithEmailAndPassword } from 'firebase/auth'
 import { useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
@@ -13,6 +13,7 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid }) {
 
 	const fetchAccounts = async (userUid) => {
 		const accountsRef = ref(db, `users/${userUid}/accounts`)
+    const userRef = ref(db, `users/${userUid}`)
 		const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
 		try {
 			const snapshot = await get(accountsRef)
@@ -24,7 +25,9 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid }) {
 					const isExpired = account.creationDate + expirationLength < Date.now()
 					return !isExpired
 				})
+        console.log(unexpiredAccounts)
 				dispatch(setAccounts(unexpiredAccounts))
+        update(userRef, { accounts: unexpiredAccounts })
 			}
 		} catch (error) {
 			console.error('Error fetching accounts: ', error)
