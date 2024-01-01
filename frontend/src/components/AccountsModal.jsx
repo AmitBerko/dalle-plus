@@ -4,13 +4,13 @@ import { db } from '../firebaseConfig'
 import { ref, update } from 'firebase/database'
 import { useSelector, useDispatch } from 'react-redux'
 import { removeAccount, addAccount } from '../redux/accountsSlice'
+import ExplanationModal from './ExplanationModal'
 
 function AccountsModal({ userUid }) {
 	const accounts = useSelector((state) => state.accounts.value)
 	const dispatch = useDispatch()
 	const [cookieInput, setCookieInput] = useState('')
 	const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
-
 	const userRef = ref(db, `users/${userUid}`)
 
 	const updateDb = async (updatedAccounts) => {
@@ -59,13 +59,13 @@ function AccountsModal({ userUid }) {
 		let expiresInDays = parseInt(expiresIn / (1000 * 60 * 60 * 24))
 
 		// Either show days or hours
-    if (expiresInDays > 1) {
-      return `${expiresInDays} Days`
-    } else if (expiresInDays > 1) {
-      return `${expiresInDays * 24} Hours`
-    } else {
-      return `${expiresInDays * 24 * 60} Minutes`
-    }
+		if (expiresInDays > 1) {
+			return `${expiresInDays} Days`
+		} else if (expiresInDays > 1) {
+			return `${expiresInDays * 24} Hours`
+		} else {
+			return `${expiresInDays * 24 * 60} Minutes`
+		}
 		// return expiresInDays > 1 ? `${expiresInDays} Days` : `${expiresInDays / 24} Hours`
 	}
 
@@ -77,7 +77,7 @@ function AccountsModal({ userUid }) {
 
 	return (
 		<>
-			<div className="modal p-2 py-5 fade" id="accounts-modal" tabIndex="-1">
+			<div className="modal fade p-2 py-5" id="accounts-modal" tabIndex="-1" data-bs-backdrop="static">
 				<div className="modal-dialog modal-dialog-scrollable modal-lg">
 					<div className="modal-content">
 						<div className="modal-header">
@@ -89,19 +89,30 @@ function AccountsModal({ userUid }) {
 							<div className="row d-flex align-items-center">
 								<div className="col-6 text-center fs-5">Cookie</div>
 								<div className="col-4 fs-5 text-center ps-0 no-wrap">Expires in</div>
+								<div className="col-2 d-flex justify-content-end p-0">
+									<i
+										className="bi bi-info-circle accounts-info py-1 px-2"
+
+										data-bs-target="#explanation-modal"
+										data-bs-toggle="modal"
+									></i>
+								</div>
 							</div>
 
 							{accounts
-								? accounts.slice().reverse().map((account, index) => {
-										return (
-											<Account
-												key={index}
-												handleRemoveAccount={handleRemoveAccount}
-												timeTillExpire={getExpiresIn(account.creationDate)}
-												cookie={account.cookie}
-											/>
-										)
-								  })
+								? accounts
+										.slice()
+										.reverse()
+										.map((account, index) => {
+											return (
+												<Account
+													key={index}
+													handleRemoveAccount={handleRemoveAccount}
+													timeTillExpire={getExpiresIn(account.creationDate)}
+													cookie={account.cookie}
+												/>
+											)
+										})
 								: null}
 						</div>
 
@@ -127,6 +138,7 @@ function AccountsModal({ userUid }) {
 					</div>
 				</div>
 			</div>
+      <ExplanationModal /> 
 		</>
 	)
 }

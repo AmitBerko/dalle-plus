@@ -2,8 +2,17 @@ textarea {
 	resize: none;
 }
 
+.modal-body p, ul {
+  margin-bottom: 7px;
+}
+
 .no-wrap {
-  white-space: nowrap;
+	white-space: nowrap;
+}
+
+.accounts-info {
+	cursor: pointer;
+	font-size: 20px;
 }
 
 .switch-size {
@@ -12,8 +21,8 @@ textarea {
 }
 
 .spinner-size {
-  width: 21px;
-  height: 21px;
+	width: 21px;
+	height: 21px;
 }
 
 @media (min-width: 275px) {
@@ -32,11 +41,19 @@ textarea {
 	.generated-image {
 		max-width: 210px;
 	}
+	.accounts-info {
+		font-size: 25px;
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+	}
 }
 
 @media (min-width: 576px) {
 	.generated-image {
 		max-width: 280px;
+	}
+	.accounts-info {
+		font-size: 30px;
 	}
 }
 

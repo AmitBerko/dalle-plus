@@ -5,6 +5,7 @@ import AccountsModal from '../components/AccountsModal'
 import { useSelector, useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
+// import { Popover } from 'https://cdn.skypack.dev/bootstrap@5.3.2'
 
 // const backendUrl = 'http://localhost:8080'
 const backendUrl = 'https://super-dalle3.onrender.com'
@@ -22,6 +23,12 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	const [user, setUser] = useState(null)
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
+  
+	// useEffect(() => {
+	// 	Array.from(document.querySelectorAll('button[data-bs-toggle="popover"]')).forEach(
+	// 		(popoverNode) => new Popover(popoverNode)
+	// 	)
+	// })
 
 	// Getting initial user data
 	useEffect(() => {
@@ -77,14 +84,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [])
 
 	const handleGenerate = () => {
-		if (!prompt) return
+		if (!prompt || !accounts) return
 		const notGeneratingAccounts = accounts
 			.map((account, originalIndex) => {
 				if (account.isGenerating) return null
 				return { ...account, originalIndex }
 			})
 			.filter((account) => account !== null)
-		console.log(`sent `, notGeneratingAccounts)
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
 	}
 
@@ -191,8 +197,8 @@ function Homepage({ setIsLoggedIn, userUid }) {
 					<div className="col">
 						<button
 							className="btn btn-success d-none w-100 d-md-block"
-							data-bs-toggle="modal"
 							data-bs-target="#accounts-modal"
+							data-bs-toggle="modal"
 						>
 							Browse Accounts
 						</button>
@@ -263,6 +269,18 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				</div>
 			</section>
 			<AccountsModal userUid={userUid} />
+			{/* <button
+				type="button"
+				className="btn btn-secondary"
+				data-bs-toggle="popover"
+				title="Popover Title"
+				data-bs-content="Popover Content"
+			>
+				Click me
+			</button> */}
+      
+
+			{/* <button onClick={() => console.log(userUid)}>print user uid</button> */}
 		</>
 	)
 }
