@@ -91,7 +91,7 @@ function AccountsModal({ userUid }) {
 								<div className="col-4 fs-5 text-center ps-0 no-wrap">Expires in</div>
 								<div className="col-2 d-flex justify-content-end p-0">
 									<i
-										className="bi bi-info-circle accounts-info py-1 px-2"
+										className="bi bi-question-circle accounts-info py-1 px-2"
 
 										data-bs-target="#explanation-modal"
 										data-bs-toggle="modal"
