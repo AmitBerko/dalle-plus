@@ -5,7 +5,6 @@ import AccountsModal from '../components/AccountsModal'
 import { useSelector, useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
-// import { Popover } from 'https://cdn.skypack.dev/bootstrap@5.3.2'
 
 // const backendUrl = 'http://localhost:8080'
 const backendUrl = 'https://super-dalle3.onrender.com'
@@ -23,12 +22,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	const [user, setUser] = useState(null)
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
-  
-	// useEffect(() => {
-	// 	Array.from(document.querySelectorAll('button[data-bs-toggle="popover"]')).forEach(
-	// 		(popoverNode) => new Popover(popoverNode)
-	// 	)
-	// })
+
+	useEffect(() => {
+		const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+		const tooltipList = [...tooltipTriggerList].map(
+			(tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl)
+		)
+	}, [])
 
 	// Getting initial user data
 	useEffect(() => {
@@ -225,16 +225,9 @@ function Homepage({ setIsLoggedIn, userUid }) {
 							Successful images: {urlArray ? urlArray.length : 0}
 						</div>
 					</div>
-					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
-						<div className="fs-3 text-center">
-							{accounts
-								? `Now generating: ${generatingCount} / ${accounts.length}`
-								: 'Now generating: 0 / 0'}
-						</div>
-					</div>
 
-					<div className="col-xl-4">
-						<div className="form-check form-switch d-flex justify-content-center align-items-center">
+					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
+						<div className="form-check form-switch d-flex align-items-center">
 							<input
 								className="form-check-input me-2 me-lg-3 switch-size"
 								type="checkbox"
@@ -243,9 +236,24 @@ function Homepage({ setIsLoggedIn, userUid }) {
 								onChange={() => setIsSlowMode((prev) => !prev)}
 								id="imageFilterSwitch"
 							/>
-							<label className="form-check-label fs-3" htmlFor="imageFilterSwitch">
+							<label className="form-check-label fs-3 me-2 me-lg-3" htmlFor="imageFilterSwitch">
 								Slow Mode
 							</label>
+							<i
+								style={{ cursor: 'pointer' }}
+								className="bi bi-question-circle fs-2"
+								data-bs-toggle="tooltip"
+								data-bs-placement="right"
+								data-bs-title="Each account receives 15 daily credits for faster prompt generation. Enable Slow Mode to generate prompts without consuming credits."
+							></i>
+						</div>
+					</div>
+
+					<div className="col-xl-4">
+						<div className="fs-3 text-center">
+							{accounts
+								? `Now generating: ${generatingCount} / ${accounts.length}`
+								: 'Now generating: 0 / 0'}
 						</div>
 					</div>
 				</div>
@@ -269,17 +277,6 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				</div>
 			</section>
 			<AccountsModal userUid={userUid} />
-			{/* <button
-				type="button"
-				className="btn btn-secondary"
-				data-bs-toggle="popover"
-				title="Popover Title"
-				data-bs-content="Popover Content"
-			>
-				Click me
-			</button> */}
-      
-
 			{/* <button onClick={() => console.log(userUid)}>print user uid</button> */}
 		</>
 	)
