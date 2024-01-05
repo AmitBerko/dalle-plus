@@ -94,7 +94,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
 	}
 
-	function handleUnload() {
+	// function handleUnload() {
 		// console.log(`accounts before update is `, accounts)
 		// const updatedAccounts = accounts.map((account) => {
 		// 	return { ...account, isGenerating: false }
@@ -103,8 +103,8 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		// console.log(`the updated accounts are:`, updatedAccounts)
 
 		// dispatch(setAccounts(updatedAccounts))
-		clearImages()
-	}
+	// 	clearImages()
+	// }
 
 	function clearImages() {
 		socket.emit('clearImages', { userUid })
