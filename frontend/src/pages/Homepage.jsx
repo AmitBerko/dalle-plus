@@ -75,13 +75,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		}
 	}, [userUid])
 
-	useEffect(() => {
-		window.addEventListener('beforeunload', handleUnload)
+	// useEffect(() => {
+	// 	window.addEventListener('beforeunload', handleUnload)
 
-		return () => {
-			window.removeEventListener('beforeunload', handleUnload)
-		}
-	}, [])
+	// 	return () => {
+	// 		window.removeEventListener('beforeunload', handleUnload)
+	// 	}
+	// }, [])
 
 	const handleGenerate = () => {
 		if (!prompt || !accounts) return
