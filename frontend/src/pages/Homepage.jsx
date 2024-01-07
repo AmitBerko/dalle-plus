@@ -266,7 +266,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 						{urlArray?.map((url, index) => (
 							<img
 								key={index}
-								src={`${url}?w=270&h=270`}
+								src={url}
 								alt={url}
 								className="img-fluid generated-image p-2 m-0"
 								onClick={() => window.open(url, '_blank')}
