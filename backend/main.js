@@ -83,7 +83,15 @@ io.on('connection', (socket) => {
 				await imagesRef.set(allUrls)
 				console.log(`${account.cookie.slice(0, 5)} has generated ${urls.length} images`)
 			} catch (error) {
-				console.log('error is ', error)
+				let errorMessage
+				if (error === 'Invalid cookie') {
+          // Show the first 5 letters of the cookie. add ".." if its longer than 5
+					errorMessage = `"${account.cookie.slice(0, 5)}${
+						account.cookie.length > 5 ? '..' : ''
+					}" is an invalid cookie`
+				}
+
+				socket.emit('toastAlert', { errorMessage })
 			} finally {
 				await accountRef.update({ isGenerating: false })
 			}

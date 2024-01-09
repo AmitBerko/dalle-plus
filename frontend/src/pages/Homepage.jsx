@@ -5,9 +5,10 @@ import AccountsModal from '../components/AccountsModal'
 import { useSelector, useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
+import toastr from '../toastrConfig'
 
-// const backendUrl = 'http://localhost:8080'
-const backendUrl = 'https://super-dalle3.onrender.com'
+const backendUrl = 'http://localhost:8080'
+// const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
@@ -20,6 +21,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	const [isSlowMode, setIsSlowMode] = useState(true)
 	const [isGenerating, setIsGenerating] = useState(false)
 	const [user, setUser] = useState(null)
+	const [toastMessage, setToastMessage] = useState()
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
 
@@ -45,7 +47,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [])
 
 	useEffect(() => {
-		if (generatingCount === accounts.length && accounts.length !== 0) {
+		if (accounts && generatingCount === accounts.length && accounts.length !== 0) {
 			setIsGenerating(true)
 		} else {
 			setIsGenerating(false)
@@ -75,6 +77,16 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		}
 	}, [userUid])
 
+	useEffect(() => {
+		socket.on('toastAlert', ({ errorMessage }) => {
+      toastr.error(errorMessage, 'Error')
+
+			return () => {
+				socket.disconnect()
+			}
+		})
+	}, [])
+
 	// useEffect(() => {
 	// 	window.addEventListener('beforeunload', handleUnload)
 
@@ -95,14 +107,14 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}
 
 	// function handleUnload() {
-		// console.log(`accounts before update is `, accounts)
-		// const updatedAccounts = accounts.map((account) => {
-		// 	return { ...account, isGenerating: false }
-		// })
+	// console.log(`accounts before update is `, accounts)
+	// const updatedAccounts = accounts.map((account) => {
+	// 	return { ...account, isGenerating: false }
+	// })
 
-		// console.log(`the updated accounts are:`, updatedAccounts)
+	// console.log(`the updated accounts are:`, updatedAccounts)
 
-		// dispatch(setAccounts(updatedAccounts))
+	// dispatch(setAccounts(updatedAccounts))
 	// 	clearImages()
 	// }
 
@@ -219,43 +231,46 @@ function Homepage({ setIsLoggedIn, userUid }) {
 					Clear Images
 				</button>
 				{/* Accounts / images / Checkbox */}
-				<div className="row">
-					<div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center">
-						<div className="fs-3 text-center">
-							Successful images: {urlArray ? urlArray.length : 0}
-						</div>
+				<div
+					className="d-flex flex-column justify-content-center
+          flex-sm-row flex-sm-wrap w-100 align-items-center"
+				>
+					{/* <div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center"> */}
+					<div className="fs-3 text-center me-sm-3 me-lg-4 me-xl-5">
+						Successful images: {urlArray ? urlArray.length : 0}
 					</div>
+					{/* </div> */}
 
-					<div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center">
-						<div className="form-check form-switch d-flex align-items-center">
-							<input
-								className="form-check-input me-2 me-lg-3 switch-size"
-								type="checkbox"
-								role="switch"
-								checked={isSlowMode}
-								onChange={() => setIsSlowMode((prev) => !prev)}
-								id="imageFilterSwitch"
-							/>
-							<label className="form-check-label fs-3 me-2 me-lg-3" htmlFor="imageFilterSwitch">
-								Slow Mode
-							</label>
-							<i
-								style={{ cursor: 'pointer' }}
-								className="bi bi-question-circle fs-2"
-								data-bs-toggle="tooltip"
-								data-bs-placement="right"
-								data-bs-title="Each account receives 15 daily credits for faster prompt generation. Enable Slow Mode to generate prompts without consuming credits."
-							></i>
-						</div>
+					{/* <div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center"> */}
+					<div className="form-check form-switch d-flex align-items-center mx-sm-3 mx-lg-4 mx-xl-5">
+						<input
+							className="form-check-input me-2 switch-size"
+							type="checkbox"
+							role="switch"
+							checked={isSlowMode}
+							onChange={() => setIsSlowMode((prev) => !prev)}
+							id="imageFilterSwitch"
+						/>
+						<label className="form-check-label fs-3 me-2" htmlFor="imageFilterSwitch">
+							Slow Mode
+						</label>
+						<i
+							style={{ cursor: 'pointer' }}
+							className="bi bi-question-circle fs-2"
+							data-bs-toggle="tooltip"
+							data-bs-placement="right"
+							data-bs-title="Each account receives 15 daily credits for faster prompt generation. Enable Slow Mode to generate prompts without consuming credits."
+						></i>
 					</div>
+					{/* </div> */}
 
-					<div className="col-xl-4">
-						<div className="fs-3 text-center">
-							{accounts
-								? `Now generating: ${generatingCount} / ${accounts.length}`
-								: 'Now generating: 0 / 0'}
-						</div>
+					{/* <div className="col-xl-4"> */}
+					<div className="fs-3 text-center ms-sm-3 ms-lg-4 ms-xl-5">
+						{accounts
+							? `Now generating: ${generatingCount} / ${accounts.length}`
+							: 'Now generating: 0 / 0'}
 					</div>
+					{/* </div> */}
 				</div>
 			</section>
 
@@ -278,6 +293,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 			</section>
 			<AccountsModal userUid={userUid} />
 			{/* <button onClick={() => console.log(userUid)}>print user uid</button> */}
+			{/* <AlertToast message={toastMessage} /> */}
+			<button type="button" className="btn btn-primary" id="alerts-toast-btn">
+				Show live toast
+			</button>
+			<button onClick={() => toastr.error('sadas')}>
+				change message
+			</button>
 		</>
 	)
 }
