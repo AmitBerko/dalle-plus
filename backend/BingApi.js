@@ -26,47 +26,40 @@ class BingApi {
 	async createImages(prompt, isSlowMode) {
 		try {
 			const payload = `q=${encodeURIComponent(prompt)}`
-			const credits = await this.getCredits()
+			let credits = await this.getCredits()
 			if (!credits) {
-				throw `${this.cookie.slice(0, 5)} is an invalid cookie`
+				credits = 0 // Just incase it fails to get the credits
 			}
-			// console.log(`${credits} credits`)
+			console.log(`${credits} credits`)
 			// If the account ran out of credits, use slowmode, otherwise let the parameter determine
 			let response = await this.#sendRequest(credits > 0 ? isSlowMode : true, payload)
-			// console.log(`status is ${response.status}`)
+			console.log(`status is ${response.status}`)
+
+			// Error handlers
 			if (response.status === 200) {
 				const responseHtml = await response.text()
-				if (responseHtml.includes('gil_err_tc')) {
-					throw 'Blocked prompt'
+				const $ = cheerio.load(responseHtml)
+				const errorAmount = $('.gil_err_img.rms_img').length
+				if (
+					$('#gilen_son').hasClass('show_n') ||
+					(errorAmount === 2 && credits > 0 && isSlowMode)
+				) {
+					throw 'Dalle-3 is currently unavailable'
+				} else if (errorAmount === 2) {
+					throw 'Invalid cookie'
+				} else if (errorAmount === 4) {
+					throw 'Prompt has been blocked'
+				} else {
+					throw 'Unknown error'
 				}
-				throw 'Either a problem with bing or your account is already generating'
 			}
 
-			// Error when using slow mode
-			// if (response.status === 200 && isSlowMode) {
-			// 	throw 'Account is already generating'
-			// }
-
-			// // Error when using fast mode
-			// if (response.status === 200 && !isSlowMode) {
-			// 	console.log('Blocked or you ran out of credits. trying with slow mode:')
-			// 	response = await this.#sendRequest(true, payload)
-
-			// 	// Just incase it still doesn't work
-			// 	if (response.status === 200) {
-			// 		throw 'Account is already generating'
-			// 	}
-			// }
-
-			// console.log('response status is', response.status)
 			const eventId = response.headers.get('x-eventid')
-			// console.log(`eventId is ${eventId}`)
-
-			// console.log('Waiting for images:')
-			return await this.#retrieveImages(eventId)
+			console.log('now moving to getting the images:')
+			this.#retrieveImages(eventId)
 		} catch (error) {
-			console.log(`error is ${error}`)
-			return []
+			console.log(`the error in bingapi is ${error}`)
+      throw error // Send the error to main.js
 		}
 	}
 
@@ -78,8 +71,6 @@ class BingApi {
 		})
 		const html = await response.text()
 		const $ = cheerio.load(html)
-    // console.log(`the html is of ${this.cookie.slice(0, 5)}`, html.slice(0, 300))
-    // console.log('\n \n')
 		return $('#token_bal').text()
 	}
 
@@ -111,7 +102,7 @@ class BingApi {
 	async #retrieveImages(eventId) {
 		// Retrieve the images after they were created
 		try {
-			// process.stdout.write('Waiting for results')
+			process.stdout.write('Waiting for results')
 			while (true) {
 				const images = await fetch(`${bingUrl}/images/create/async/results/1-${eventId}`, {
 					headers: this.#headers,
@@ -122,17 +113,13 @@ class BingApi {
 				const html = await images.text()
 
 				if (html.includes(`"errorMessage":"Pending"`)) {
-					throw `Error occured for ${this.cookie.slice(0, 5)}`
+					throw 'Error occured'
 				}
 
 				let results = []
 
-				if (
-					html === '' ||
-					html.includes('GenerativeImagesStatusPage') ||
-					html.includes("Bing isn't available")
-				) {
-					// process.stdout.write('.')
+				if (html === '') {
+					process.stdout.write('.')
 
 					// Wait for 4 seconds and try again
 					await new Promise((resolve) => setTimeout(resolve, 4000))
@@ -147,16 +134,11 @@ class BingApi {
 					results.push(goodLink)
 				}
 
-				// console.log(results)
-				if (!results || results.length === 0) {
-					console.log(`theres probably an error, results are `, results)
-					console.log(`and the html is`, html)
-				}
+				console.log(results)
 				return results
 			}
 		} catch (error) {
 			console.log(`Error in retrieveImages: ${error}`)
-			return []
 		}
 	}
 }
