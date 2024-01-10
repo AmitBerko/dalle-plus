@@ -23,10 +23,9 @@ class BingApi {
 		}
 	}
 
-	async createImages(prompt, isSlowMode) {
+	async createImages(prompt, isSlowMode, credits) {
 		try {
 			const payload = `q=${encodeURIComponent(prompt)}`
-			let credits = await this.getCredits()
 			if (!credits) {
 				credits = 0 // Just incase it fails to get the credits
 			}
@@ -56,7 +55,7 @@ class BingApi {
 
 			const eventId = response.headers.get('x-eventid')
 			console.log('now moving to getting the images:')
-			this.#retrieveImages(eventId)
+			return await this.#retrieveImages(eventId) || []
 		} catch (error) {
 			console.log(`the error in bingapi is ${error}`)
       throw error // Send the error to main.js
