@@ -21,7 +21,6 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	const [isSlowMode, setIsSlowMode] = useState(true)
 	const [isGenerating, setIsGenerating] = useState(false)
 	const [user, setUser] = useState(null)
-	const [toastMessage, setToastMessage] = useState()
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
 
@@ -78,14 +77,22 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [userUid])
 
 	useEffect(() => {
-		socket.on('toastAlert', ({ errorMessage }) => {
-      toastr.error(errorMessage, 'Error')
+		const errorToastListener = ({ errorMessage }) => {
+			toastr.error(errorMessage, 'Error')
+		}
 
-			return () => {
-				socket.disconnect()
-			}
-		})
-	}, [])
+		const warningToastListener = ({ warningMessage }) => {
+			toastr.warning(warningMessage, 'Warning')
+		}
+
+		socket.on('errorToast', errorToastListener)
+		socket.on('warningToast', warningToastListener)
+
+		return () => {
+			socket.off('errorToast', errorToastListener)
+			socket.off('warningToast', warningToastListener)
+		}
+	}, [socket])
 
 	// useEffect(() => {
 	// 	window.addEventListener('beforeunload', handleUnload)
@@ -292,14 +299,6 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				</div>
 			</section>
 			<AccountsModal userUid={userUid} />
-			{/* <button onClick={() => console.log(userUid)}>print user uid</button> */}
-			{/* <AlertToast message={toastMessage} /> */}
-			<button type="button" className="btn btn-primary" id="alerts-toast-btn">
-				Show live toast
-			</button>
-			<button onClick={() => toastr.error('sadas')}>
-				change message
-			</button>
 		</>
 	)
 }
