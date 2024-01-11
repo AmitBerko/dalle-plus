@@ -84,7 +84,6 @@ io.on('connection', (socket) => {
 
 				// If its slow mode then the credits shouldn't matter
 				if (credits === '0' && !isSlowMode) {
-					console.log(`should be emitted `)
 					socket.emit('warningToast', {
 						warningMessage: `Account "${account.cookie.slice(0, 8)}"
           has ran out of credits. Expect delay in their results`,
@@ -96,12 +95,11 @@ io.on('connection', (socket) => {
 				console.log(`${account.cookie.slice(0, 5)} has generated ${urls.length} images`)
 			} catch (errorMessage) {
 				if (errorMessage === 'Invalid cookie') {
-					// Show the first 5 letters of the cookie. add ".." if its longer than 5
+					// Show the first 8 letters of the cookie. add ".." if its longer than 8
 					errorMessage = `"${account.cookie.slice(0, 8)}${
 						account.cookie.length > 8 ? '..' : ''
 					}" is an invalid cookie`
 				}
-        console.log(`the error ${errorMessage} should be emitted`)
 
 				socket.emit('errorToast', { errorMessage })
 			} finally {

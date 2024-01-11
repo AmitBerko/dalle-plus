@@ -78,12 +78,10 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	useEffect(() => {
 		const errorToastListener = ({ errorMessage }) => {
-			console.log(`an error message should appear: ${errorMessage}`)
 			toastr.error(errorMessage, 'Error')
 		}
 
 		const warningToastListener = ({ warningMessage }) => {
-			console.log(`a warning message should appear: ${warningMessage}`)
 			toastr.warning(warningMessage, 'Warning')
 		}
 
