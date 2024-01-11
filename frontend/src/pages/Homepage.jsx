@@ -7,8 +7,8 @@ import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
 import toastr from '../toastrConfig'
 
-// const backendUrl = 'http://localhost:8080'
-const backendUrl = 'https://super-dalle3.onrender.com'
+const backendUrl = 'http://localhost:8080'
+// const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
@@ -78,10 +78,12 @@ function Homepage({ setIsLoggedIn, userUid }) {
 
 	useEffect(() => {
 		const errorToastListener = ({ errorMessage }) => {
+			console.log(`an error message should appear: ${errorMessage}`)
 			toastr.error(errorMessage, 'Error')
 		}
 
 		const warningToastListener = ({ warningMessage }) => {
+			console.log(`a warning message should appear: ${warningMessage}`)
 			toastr.warning(warningMessage, 'Warning')
 		}
 
@@ -266,7 +268,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 							className="bi bi-question-circle fs-2"
 							data-bs-toggle="tooltip"
 							data-bs-placement="right"
-							data-bs-title="Each account receives 15 daily credits for faster prompt generation. Enable Slow Mode to generate prompts without consuming credits."
+							data-bs-title="Each account receives 15 daily credits for faster prompt generation. You can enable Slow Mode to generate prompts without consuming credits. Accounts that run out of credits will automatically switch to Slow Mode."
 						></i>
 					</div>
 					{/* </div> */}

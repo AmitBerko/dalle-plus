@@ -43,7 +43,7 @@ class BingApi {
 					$('#gilen_son').hasClass('show_n') ||
 					(errorAmount === 2 && credits > 0 && isSlowMode)
 				) {
-					throw 'Dalle-3 is currently unavailable'
+					throw 'Due to high demand Dalle-3\'s Slow Mode is currently unavailable'
 				} else if (errorAmount === 2) {
 					throw 'Invalid cookie'
 				} else if (errorAmount === 4) {
