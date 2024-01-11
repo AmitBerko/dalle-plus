@@ -7,8 +7,8 @@ import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
 import toastr from '../toastrConfig'
 
-const backendUrl = 'http://localhost:8080'
-// const backendUrl = 'https://super-dalle3.onrender.com'
+// const backendUrl = 'http://localhost:8080'
+const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
@@ -18,7 +18,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
-	const [isSlowMode, setIsSlowMode] = useState(true)
+	const [isSlowMode, setIsSlowMode] = useState(false)
 	const [isGenerating, setIsGenerating] = useState(false)
 	const [user, setUser] = useState(null)
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
