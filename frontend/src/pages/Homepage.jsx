@@ -8,10 +8,10 @@ import { io } from 'socket.io-client'
 import toastr from '../toastrConfig'
 
 // Testing backend url
-const backendUrl = 'http://localhost:8080'
+// const backendUrl = 'http://localhost:8080'
 
 // Production backend url
-// const backendUrl = 'https://super-dalle3.onrender.com'
+const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
@@ -140,7 +140,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 						{user ? `Hello ${user.name}` : ''}{' '}
 						<a
 							style={{ cursor: 'pointer', color: 'lightblue' }}
-							onClick={() => setIsLoggedIn(false)}
+							onClick={() => {setIsLoggedIn(false); setUser(null)}}
 						>
 							Log out
 						</a>
