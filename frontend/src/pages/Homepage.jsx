@@ -7,23 +7,32 @@ import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
 import toastr from '../toastrConfig'
 
+// Testing backend url
 const backendUrl = 'http://localhost:8080'
+
+// Production backend url
 // const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
 function Homepage({ setIsLoggedIn, userUid }) {
-	const accounts = useSelector((state) => state.accounts.value)
-	const dispatch = useDispatch()
+  // States
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
 	const [isSlowMode, setIsSlowMode] = useState(false)
 	const [isGenerating, setIsGenerating] = useState(false)
 	const [user, setUser] = useState(null)
+
+  // Redux state
+	const accounts = useSelector((state) => state.accounts.value)
+	const dispatch = useDispatch()
+
+  // Firebase db refs
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
 
+  // Bootstrap tooltips initialization
 	useEffect(() => {
 		const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
 		const tooltipList = [...tooltipTriggerList].map(
@@ -45,6 +54,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		setInitialData()
 	}, [])
 
+  // Update the generate button's status
 	useEffect(() => {
 		if (accounts && generatingCount === accounts.length && accounts.length !== 0) {
 			setIsGenerating(true)
@@ -53,6 +63,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		}
 	}, [generatingCount])
 
+  // Get the amount of the generating accounts
 	useEffect(() => {
 		if (!accounts) return
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
@@ -60,11 +71,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [accounts])
 
 	useEffect(() => {
+    // Render the images when the db updates
 		const imagesUnsubscribe = onValue(imagesRef, (snapshot) => {
 			const data = snapshot.val()
 			setUrlArray(data)
 		})
 
+    // Update the account's generating status to sync with the db
 		const accountsUnsubscribe = onValue(accountsRef, async (snapshot) => {
 			const data = await snapshot.val()
 			dispatch(setAccounts(data))
@@ -77,10 +90,12 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [userUid])
 
 	useEffect(() => {
+		// Error alerts
 		const errorToastListener = ({ errorMessage }) => {
 			toastr.error(errorMessage, 'Error')
 		}
 
+		// Warning alerts
 		const warningToastListener = ({ warningMessage }) => {
 			toastr.warning(warningMessage, 'Warning')
 		}
@@ -94,14 +109,6 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		}
 	}, [socket])
 
-	// useEffect(() => {
-	// 	window.addEventListener('beforeunload', handleUnload)
-
-	// 	return () => {
-	// 		window.removeEventListener('beforeunload', handleUnload)
-	// 	}
-	// }, [])
-
 	const handleGenerate = () => {
 		if (!prompt || !accounts) return
 		const notGeneratingAccounts = accounts
@@ -110,21 +117,12 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				return { ...account, originalIndex }
 			})
 			.filter((account) => account !== null)
+      
+    // Start generating with all accounts that are not currently generating
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
 	}
 
-	// function handleUnload() {
-	// console.log(`accounts before update is `, accounts)
-	// const updatedAccounts = accounts.map((account) => {
-	// 	return { ...account, isGenerating: false }
-	// })
-
-	// console.log(`the updated accounts are:`, updatedAccounts)
-
-	// dispatch(setAccounts(updatedAccounts))
-	// 	clearImages()
-	// }
-
+  // Clear all visible images
 	function clearImages() {
 		socket.emit('clearImages', { userUid })
 	}
@@ -242,13 +240,10 @@ function Homepage({ setIsLoggedIn, userUid }) {
 					className="d-flex flex-column justify-content-center
           flex-sm-row flex-sm-wrap w-100 align-items-center"
 				>
-					{/* <div className="col-xl-4 col-md-6 mb-md-2 d-flex justify-content-center justify-content-md-end justify-content-xl-center"> */}
 					<div className="fs-3 text-center me-sm-3 me-lg-4 me-xl-5">
 						Successful images: {urlArray ? urlArray.length : 0}
 					</div>
-					{/* </div> */}
 
-					{/* <div className="col-xl-4 col-md-6 d-flex justify-content-center justify-content-md-start justify-content-xl-center"> */}
 					<div className="form-check form-switch d-flex align-items-center mx-sm-3 mx-lg-4 mx-xl-5">
 						<input
 							className="form-check-input me-2 switch-size"
@@ -269,19 +264,16 @@ function Homepage({ setIsLoggedIn, userUid }) {
 							data-bs-title="Each account receives 15 daily credits for faster prompt generation. You can enable Slow Mode to generate prompts without consuming credits. Accounts that run out of credits will automatically switch to Slow Mode."
 						></i>
 					</div>
-					{/* </div> */}
 
-					{/* <div className="col-xl-4"> */}
 					<div className="fs-3 text-center ms-sm-3 ms-lg-4 ms-xl-5">
 						{accounts
 							? `Now generating: ${generatingCount} / ${accounts.length}`
 							: 'Now generating: 0 / 0'}
 					</div>
-					{/* </div> */}
 				</div>
 			</section>
 
-			{/* Result images section, Shows either all images or only successful ones (depending if filter's true) */}
+			{/* Result images section */}
 			<section>
 				<div className="container-fluid px-2 px-md-5">
 					<div className="row justify-content-center">
