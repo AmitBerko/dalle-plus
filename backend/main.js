@@ -53,6 +53,7 @@ io.on('connection', (socket) => {
 	let allUrls = []
 
 	socket.on('clearImages', async (data) => {
+		// Clear the user's images
 		const { userUid } = data
 		const imagesRef = db.ref(`/users/${userUid}/generatedImages`)
 
@@ -61,36 +62,42 @@ io.on('connection', (socket) => {
 	})
 
 	socket.on('generateImages', async (data) => {
-		console.log('entered')
+		// Get the request's parameters
 		const { prompt, accounts, isSlowMode, userUid } = data
 		const imagesRef = db.ref(`/users/${userUid}/generatedImages`)
 		const imagesSnapshot = await imagesRef.once('value')
 
 		allUrls = []
+
+		// Get the previous images so they won't get deleted
 		if (imagesSnapshot.exists()) {
 			allUrls = imagesSnapshot.val()
 			console.log(`the val is`, allUrls)
 		}
 
+		// Loop through every account
 		const requests = accounts.map(async (account) => {
 			const accountRef = db.ref(`users/${userUid}/accounts/${account.originalIndex}`)
 			try {
 				console.log(`${account.cookie.slice(0, 5)} has started generating`)
+				// Set the account's generating status to true
 				await accountRef.update({ isGenerating: true })
-
 				const bingApi = new BingApi(account.cookie)
 				const credits = await bingApi.getCredits()
 				console.log(`${account.cookie.slice(0, 5)} credits are ${credits}`)
 
-				// If its slow mode then the credits shouldn't matter
+				// Emit a warning if an account has 0 credits
 				if (credits === '0' && !isSlowMode) {
 					socket.emit('warningToast', {
 						warningMessage: `Account "${account.cookie.slice(0, 8)}"
           has ran out of credits. Expect delay in their results`,
 					})
 				}
+				// Create the images
 				const urls = await bingApi.createImages(prompt, isSlowMode, credits)
 				allUrls.push(...urls)
+
+				// Update the db with the new images
 				await imagesRef.set(allUrls)
 				console.log(`${account.cookie.slice(0, 5)} has generated ${urls.length} images`)
 			} catch (errorMessage) {
