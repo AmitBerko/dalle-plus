@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { auth, db } from '../firebaseConfig'
-import { createUserWithEmailAndPassword } from 'firebase/auth'
+import { createUserWithEmailAndPassword, signOut } from 'firebase/auth'
 import { ref, set } from 'firebase/database'
 
 function SignupForm({ setShowLogin }) {
@@ -18,6 +18,7 @@ function SignupForm({ setShowLogin }) {
 
 		try {
 			const userCred = await createUserWithEmailAndPassword(auth, email, password)
+      signOut(auth)
 			const user = userCred.user
 			console.log('User signed up:', user)
 			const name = user.email
@@ -32,7 +33,6 @@ function SignupForm({ setShowLogin }) {
 
 			set(userRef, userDetails)
       setMessage('Account was created successfuly')
-			// setShowLogin(true)
 		} catch (error) {
 			console.error('pure error is', error.message)
 

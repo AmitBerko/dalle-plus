@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { db } from '../firebaseConfig'
-import { ref, get, onValue } from 'firebase/database'
+import { ref, onValue } from 'firebase/database'
 import AccountsModal from '../components/AccountsModal'
 import { useSelector, useDispatch } from 'react-redux'
 import { setAccounts } from '../redux/accountsSlice'
 import { io } from 'socket.io-client'
 import toastr from '../toastrConfig'
+import { auth } from '../firebaseConfig'
+import { signOut } from 'firebase/auth'
 
 // Testing backend url
 // const backendUrl = 'http://localhost:8080'
@@ -15,18 +17,20 @@ const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
-function Homepage({ setIsLoggedIn, userUid }) {
+function Homepage({ userData }) {
 	// States
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
 	const [isSlowMode, setIsSlowMode] = useState(false)
 	const [isGenerating, setIsGenerating] = useState(false)
-	const [user, setUser] = useState(null)
 
 	// Redux state
 	const accounts = useSelector((state) => state.accounts.value)
 	const dispatch = useDispatch()
+  
+	// User uid
+	const userUid = auth.currentUser.uid
 
 	// Firebase db refs
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
@@ -38,24 +42,6 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		const tooltipList = [...tooltipTriggerList].map(
 			(tooltipTriggerEl) => new window.bootstrap.Tooltip(tooltipTriggerEl)
 		)
-	}, [])
-
-	// Getting initial user data
-	useEffect(() => {
-		const setInitialData = async () => {
-			setUser(userUid)
-			const userRef = ref(db, `users/${userUid}`)
-			try {
-				const snapshot = await get(userRef)
-				if (snapshot.exists) {
-					setUser(snapshot.val())
-				}
-			} catch (error) {
-        console.error(`Error fetching initial user data: ${error}`)
-      }
-		}
-
-		setInitialData()
 	}, [])
 
 	// Update the generate button's status
@@ -131,17 +117,18 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		socket.emit('clearImages', { userUid })
 	}
 
+	function handleSignOut() {
+		signOut(auth)
+	}
+
 	return (
 		<>
 			{/* Title and prompt section */}
 			<section className="container-fluid p-3 pt-0 p-md-4 pt-md-0 px-lg-5 pb-2 pb-lg-3">
 				<div className="row mb-3 mb-lg-4 position-relative">
 					<p className="col-12 fs-6 position-absolute mt-3">
-						{user ? `Hello ${user.name}` : ''}{' '}
-						<a
-							style={{ cursor: 'pointer', color: 'lightblue' }}
-							onClick={() => {setIsLoggedIn(false); setUser(null)}}
-						>
+						{userData.name ? `Hello ${userData.name}` : 'Hello'}{' '}
+						<a style={{ cursor: 'pointer', color: 'lightblue' }} onClick={handleSignOut}>
 							Log out
 						</a>
 					</p>
