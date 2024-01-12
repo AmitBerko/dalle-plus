@@ -16,7 +16,7 @@ const backendUrl = 'http://localhost:8080'
 const socket = io(backendUrl)
 
 function Homepage({ setIsLoggedIn, userUid }) {
-  // States
+	// States
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
@@ -24,15 +24,15 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	const [isGenerating, setIsGenerating] = useState(false)
 	const [user, setUser] = useState(null)
 
-  // Redux state
+	// Redux state
 	const accounts = useSelector((state) => state.accounts.value)
 	const dispatch = useDispatch()
 
-  // Firebase db refs
+	// Firebase db refs
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
 
-  // Bootstrap tooltips initialization
+	// Bootstrap tooltips initialization
 	useEffect(() => {
 		const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
 		const tooltipList = [...tooltipTriggerList].map(
@@ -45,16 +45,20 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		const setInitialData = async () => {
 			setUser(userUid)
 			const userRef = ref(db, `users/${userUid}`)
-			const snapshot = await get(userRef)
-			if (snapshot.exists) {
-				setUser(snapshot.val())
-			}
+			try {
+				const snapshot = await get(userRef)
+				if (snapshot.exists) {
+					setUser(snapshot.val())
+				}
+			} catch (error) {
+        console.error(`Error fetching initial user data: ${error}`)
+      }
 		}
 
 		setInitialData()
 	}, [])
 
-  // Update the generate button's status
+	// Update the generate button's status
 	useEffect(() => {
 		if (accounts && generatingCount === accounts.length && accounts.length !== 0) {
 			setIsGenerating(true)
@@ -63,7 +67,7 @@ function Homepage({ setIsLoggedIn, userUid }) {
 		}
 	}, [generatingCount])
 
-  // Get the amount of the generating accounts
+	// Get the amount of the generating accounts
 	useEffect(() => {
 		if (!accounts) return
 		const generatingAccounts = accounts.filter((account) => account.isGenerating)
@@ -71,13 +75,13 @@ function Homepage({ setIsLoggedIn, userUid }) {
 	}, [accounts])
 
 	useEffect(() => {
-    // Render the images when the db updates
+		// Render the images when the db updates
 		const imagesUnsubscribe = onValue(imagesRef, (snapshot) => {
 			const data = snapshot.val()
 			setUrlArray(data)
 		})
 
-    // Update the account's generating status to sync with the db
+		// Update the account's generating status to sync with the db
 		const accountsUnsubscribe = onValue(accountsRef, async (snapshot) => {
 			const data = await snapshot.val()
 			dispatch(setAccounts(data))
@@ -117,12 +121,12 @@ function Homepage({ setIsLoggedIn, userUid }) {
 				return { ...account, originalIndex }
 			})
 			.filter((account) => account !== null)
-      
-    // Start generating with all accounts that are not currently generating
+
+		// Start generating with all accounts that are not currently generating
 		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
 	}
 
-  // Clear all visible images
+	// Clear all visible images
 	function clearImages() {
 		socket.emit('clearImages', { userUid })
 	}
