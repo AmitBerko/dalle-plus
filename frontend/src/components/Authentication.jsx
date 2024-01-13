@@ -4,7 +4,7 @@ import LoginForm from './LoginForm'
 import Homepage from '../pages/Homepage'
 import { auth, db } from '../firebaseConfig'
 import { onAuthStateChanged } from 'firebase/auth'
-import { ref, get } from 'firebase/database'
+import { ref, get, update } from 'firebase/database'
 import { setAccounts } from '../redux/accountsSlice'
 import { useDispatch } from 'react-redux'
 
@@ -12,52 +12,63 @@ function Authentication() {
 	const dispatch = useDispatch()
 	const [showLogin, setShowLogin] = useState(true) // Will show login form as default
 	const [userData, setUserData] = useState({})
-  const [hasLoaded, setHasLoaded] = useState(false)
-  const [user, setUser] = useState(null)
+	const [hasLoaded, setHasLoaded] = useState(false)
+	const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
+	// const [user, setUser] = useState(null)
 
 	useEffect(() => {
-		const getUserData = () =>
-			onAuthStateChanged(auth, async (currentUser) => {
-        if (!showLogin) {
-          return
-        }
-        setUser(currentUser)
-        console.log(`the account for some reason is:`, currentUser)
+		const getUserData = async (currentUser) => {
+			console.log('the account is: ', currentUser)
 
-				if (!currentUser) {
-					setUserData({})
-          setHasLoaded(true)
-					return
-				}
-				const userRef = ref(db, `users/${currentUser.uid}`)
-				try {
-					const snapshot = await get(userRef)
-					if (snapshot.exists()) {
-						let snapshotVal = await snapshot.val()
-						const newUserData = {
-							uid: currentUser.uid,
-							name: snapshotVal.name,
-							accounts: snapshotVal.accounts,
-						}
-						setUserData(newUserData)
-						dispatch(setAccounts(newUserData.accounts))
-            setHasLoaded(true)
+			if (!currentUser) {
+				console.log('current user is not defined')
+				setUserData({})
+				setHasLoaded(true)
+				return
+			}
+
+			const userRef = ref(db, `users/${currentUser.uid}`)
+			try {
+				const snapshot = await get(userRef)
+				if (snapshot.exists()) {
+					let snapshotVal = await snapshot.val()
+					const unexpiredAccounts = snapshotVal.accounts.filter((account) => {
+						const isExpired = account.creationDate + expirationLength < Date.now()
+						return !isExpired
+					})
+					update(userRef, { accounts: unexpiredAccounts })
+					const newUserData = {
+						uid: currentUser.uid,
+						name: snapshotVal.name,
+						accounts: unexpiredAccounts,
 					}
-				} catch (error) {
-					console.log(`Failed to fetch user data: ${error}`)
+					setUserData(newUserData)
+					dispatch(setAccounts(newUserData.accounts))
 				}
-			})
+			} catch (error) {
+				console.log(`Failed to fetch user data: ${error}`)
+			} finally {
+        setHasLoaded(true)
+      }
+		}
 
-		getUserData()
+		const handleAuthChange = (currentUser) => {
+			// setUser(currentUser)
+			getUserData(currentUser)
+		}
+
+		onAuthStateChanged(auth, handleAuthChange)
 	}, [])
 
-  if (!hasLoaded) {
-		return <></>
+	if (!hasLoaded) {
+		return (
+			<></>
+		)
 	}
 
 	return (
 		<>
-			{userData.uid && hasLoaded ? (
+			{auth.currentUser ? (
 				<Homepage userData={userData} />
 			) : showLogin ? (
 				<LoginForm setShowLogin={setShowLogin} />

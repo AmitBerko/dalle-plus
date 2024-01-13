@@ -9,30 +9,30 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid }) {
 	const [email, setEmail] = useState('')
 	const [password, setPassword] = useState('')
 	const [message, setMessage] = useState('')
-	const dispatch = useDispatch()
+	// const dispatch = useDispatch()
 
-	const fetchAccounts = async (userUid) => {
-		const accountsRef = ref(db, `users/${userUid}/accounts`)
-		const userRef = ref(db, `users/${userUid}`)
-		const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
-		try {
-			const snapshot = await get(accountsRef)
-			if (snapshot.exists()) {
-				const allAccounts = snapshot.val()
+	// const fetchAccounts = async (userUid) => {
+	// 	const accountsRef = ref(db, `users/${userUid}/accounts`)
+	// 	const userRef = ref(db, `users/${userUid}`)
+	// 	const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
+	// 	try {
+	// 		const snapshot = await get(accountsRef)
+	// 		if (snapshot.exists()) {
+	// 			const allAccounts = snapshot.val()
 
-				// Get all unexpired accounts
-				const unexpiredAccounts = allAccounts.filter((account) => {
-					const isExpired = account.creationDate + expirationLength < Date.now()
-					return !isExpired
-				})
-				console.log(unexpiredAccounts)
-				dispatch(setAccounts(unexpiredAccounts))
-				update(userRef, { accounts: unexpiredAccounts })
-			}
-		} catch (error) {
-			console.error('Error fetching accounts: ', error)
-		}
-	}
+	// 			// Get all unexpired accounts
+	// 			const unexpiredAccounts = allAccounts.filter((account) => {
+	// 				const isExpired = account.creationDate + expirationLength < Date.now()
+	// 				return !isExpired
+	// 			})
+	// 			console.log(unexpiredAccounts)
+	// 			dispatch(setAccounts(unexpiredAccounts))
+	// 			update(userRef, { accounts: unexpiredAccounts })
+	// 		}
+	// 	} catch (error) {
+	// 		console.error('Error fetching accounts: ', error)
+	// 	}
+	// }
 
 	async function handleLogin(e) {
 		e.preventDefault()
@@ -40,6 +40,7 @@ function LoginForm({ setShowLogin, setIsLoggedIn, setUserUid }) {
 		try {
 			const userCred = await signInWithEmailAndPassword(auth, email, password)
 			const user = userCred.user
+      auth.currentUser = user
 			console.log(`user signed in: `, user)
 		} catch (error) {
 			setMessage('Incorrect login credentials. Please verify your email and password')
