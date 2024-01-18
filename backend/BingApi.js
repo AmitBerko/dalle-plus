@@ -39,11 +39,13 @@ class BingApi {
 				const responseHtml = await response.text()
 				const $ = cheerio.load(responseHtml)
 				const errorAmount = $('.gil_err_img.rms_img').length
-				if (
+				if (!isSlowMode && credits > 0 && $('#gilen_son').hasClass('show_n')) {
+					throw 'Dalle-3 is currently unavailable due to high demand'
+				} else if (
 					$('#gilen_son').hasClass('show_n') ||
 					(errorAmount === 2 && credits > 0 && isSlowMode)
 				) {
-					throw 'Due to high demand Dalle-3\'s Slow Mode is currently unavailable'
+					throw 'Slow mode is currently unavailable due to high demand'
 				} else if (errorAmount === 2) {
 					throw 'Invalid cookie'
 				} else if (errorAmount === 4) {
