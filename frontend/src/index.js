@@ -1,7 +1,7 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
 import Authentication from './components/Authentication'
-import ResultsPage from './components/ResultsPage'
+import ResultsPage from './pages/ResultsPage'
 import { Provider } from 'react-redux'
 import accountsReducer from './redux/accountsSlice'
 import { configureStore } from '@reduxjs/toolkit'
