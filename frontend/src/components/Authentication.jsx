@@ -10,70 +10,74 @@ import { useDispatch } from 'react-redux'
 
 function Authentication() {
 	const dispatch = useDispatch()
-	const [showLogin, setShowLogin] = useState(true) // Will show login form as default
+	const [showLogin, setShowLogin] = useState(true)
 	const [userData, setUserData] = useState({})
 	const [hasLoaded, setHasLoaded] = useState(false)
-	const expirationLength = 1000 * 60 * 60 * 24 * 14 // 14 days
-	// const [user, setUser] = useState(null)
+	const expirationLength = 1000 * 60 * 60 * 24 * 14
 
 	useEffect(() => {
 		const getUserData = async (currentUser) => {
-			console.log('the account is: ', currentUser)
-
-			if (!currentUser) {
-				console.log('current user is not defined')
-				setUserData({})
-				setHasLoaded(true)
-				return
-			}
-
-			const userRef = ref(db, `users/${currentUser.uid}`)
 			try {
+				if (!currentUser) {
+					setUserData({})
+					return
+				}
+
+				const userRef = ref(db, `users/${currentUser.uid}`)
 				const snapshot = await get(userRef)
+
 				if (snapshot.exists()) {
 					let snapshotVal = await snapshot.val()
-					const unexpiredAccounts = snapshotVal.accounts.filter((account) => {
+					const unexpiredAccounts = snapshotVal.accounts ? snapshotVal.accounts.filter((account) => {
 						const isExpired = account.creationDate + expirationLength < Date.now()
 						return !isExpired
-					})
+					}) : []
+
 					update(userRef, { accounts: unexpiredAccounts })
+
 					const newUserData = {
 						uid: currentUser.uid,
 						name: snapshotVal.name,
 						accounts: unexpiredAccounts,
 					}
+
 					setUserData(newUserData)
 					dispatch(setAccounts(newUserData.accounts))
 				}
 			} catch (error) {
 				console.log(`Failed to fetch user data: ${error}`)
+        console.log(error)
 			} finally {
-        setHasLoaded(true)
-      }
+				setHasLoaded(true)
+			}
 		}
 
 		const handleAuthChange = (currentUser) => {
-			// setUser(currentUser)
 			getUserData(currentUser)
 		}
 
-		onAuthStateChanged(auth, handleAuthChange)
-	}, [])
+		const unsubscribe = onAuthStateChanged(auth, handleAuthChange)
 
-	if (!hasLoaded) {
-		return (
-			<></>
-		)
-	}
+		return () => unsubscribe() // Remove the subscription when the component unmounts
+	}, [])
 
 	return (
 		<>
-			{auth.currentUser ? (
-				<Homepage userData={userData} />
-			) : showLogin ? (
-				<LoginForm setShowLogin={setShowLogin} />
+			{hasLoaded ? (
+				auth.currentUser ? (
+					<Homepage userData={userData} />
+				) : showLogin ? (
+					<LoginForm setShowLogin={setShowLogin} />
+				) : (
+					<SignupForm setShowLogin={setShowLogin} />
+				)
 			) : (
-				<SignupForm setShowLogin={setShowLogin} />
+				// Display loading spinner if data hasn't loaded yet
+				<div className="loading-spinner-container">
+					<div className="spinner-border loading-spinner">
+						<span className="visually-hidden">Loading...</span>
+					</div>
+				</div>
 			)}
 		</>
 	)
