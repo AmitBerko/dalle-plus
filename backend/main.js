@@ -63,16 +63,26 @@ io.on('connection', (socket) => {
 
 	socket.on('generateImages', async (data) => {
 		// Get the request's parameters
-		const { prompt, accounts, isSlowMode, userUid } = data
+		const { prompt, accounts, isSlowMode, userUid, id } = data
 		const imagesRef = db.ref(`/users/${userUid}/generatedImages`)
+		const resultsHistoryRef = db.ref(`/users/${userUid}/resultsHistory/`)
+		const exportedResultsRef = db.ref(`/exportedResults/${id}`)
 		const imagesSnapshot = await imagesRef.once('value')
+		const resultsHistorySnapshot = await resultsHistoryRef.once('value')
 
+		let promptResults = {}
+		let previousResultsHistory = []
 		allUrls = []
 
 		// Get the previous images so they won't get deleted
 		if (imagesSnapshot.exists()) {
+			promptResults = imagesSnapshot.val()
 			allUrls = imagesSnapshot.val()
-			console.log(`the val is`, allUrls)
+			console.log(`the val is`, promptResults)
+		}
+
+		if (resultsHistorySnapshot.exists()) {
+			previousResultsHistory = resultsHistorySnapshot.val()
 		}
 
 		// Loop through every account
@@ -89,25 +99,40 @@ io.on('connection', (socket) => {
 				// Emit a warning if an account has 0 credits
 				if (credits === '0' && !isSlowMode) {
 					socket.emit('warningToast', {
-						warningMessage: `Account "${account.cookie.slice(0, 8)}"
-          has ran out of credits. Expect delay in their results`,
+						warningMessage: `Account "${account.cookie.slice(
+							0,
+							8
+						)}" has ran out of credits. Expect delay in their results`,
 					})
 				}
+
 				// Create the images
 				const urls = await bingApi.createImages(prompt, isSlowMode, credits)
-				allUrls.push(...urls)
 
 				// Update the db with the new images
+				if (!promptResults[prompt]) {
+					promptResults[prompt] = []
+				}
+
+				promptResults[prompt].push(...urls)
+				allUrls.push(...urls)
 				await imagesRef.set(allUrls)
+				await resultsHistoryRef.set([
+					{ prompt: prompt, exportId: id, imagesCount: promptResults[prompt].length },
+					...previousResultsHistory,
+				])
+				await exportedResultsRef.set({ urls: promptResults[prompt], prompt: prompt })
+
 				console.log(`${account.cookie.slice(0, 5)} has generated ${urls.length} images`)
 			} catch (errorMessage) {
 				if (errorMessage === 'Invalid cookie') {
-					// Show the first 8 letters of the cookie. add ".." if its longer than 8
+					// Show the first 8 letters of the cookie. add ".." if it's longer than 8
 					errorMessage = `"${account.cookie.slice(0, 8)}${
 						account.cookie.length > 8 ? '..' : ''
 					}" is an invalid cookie`
 				}
 
+				console.log('the error is!! ', errorMessage)
 				socket.emit('errorToast', { errorMessage })
 			} finally {
 				await accountRef.update({ isGenerating: false })

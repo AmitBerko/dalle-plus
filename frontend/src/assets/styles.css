@@ -5,7 +5,20 @@
 	-webkit-box-shadow: none !important;
 	box-shadow: none !important;
 	border: none !important;
-  border-radius: 6px !important;
+	border-radius: 6px !important;
+}
+
+.loading-spinner {
+	height: calc(3vw + 60px);
+	width: calc(3vw + 60px);
+	font-size: calc(2vw + 30px);
+}
+
+.loading-spinner-container {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
 }
 
 textarea {
@@ -38,30 +51,38 @@ ul {
 
 @media (min-width: 275px) {
 	.generated-image {
-		max-width: 135px;
+		max-width: 118px;
 	}
+
+  .small-text {
+    font-size: 1.3rem !important;
+  }
 }
 
 @media (min-width: 340px) {
 	.generated-image {
-		max-width: 165px;
+		max-width: 145px;
 	}
 }
 
 @media (min-width: 430px) {
 	.generated-image {
-		max-width: 210px;
+		max-width: 195px;
 	}
 	.accounts-info {
 		font-size: 25px;
 		padding-top: 0 !important;
 		padding-bottom: 0 !important;
 	}
+
+  .small-text {
+    font-size: 1.2rem !important;
+  }
 }
 
 @media (min-width: 576px) {
 	.generated-image {
-		max-width: 280px;
+		max-width: 260px;
 	}
 	.accounts-info {
 		font-size: 30px;
@@ -69,6 +90,9 @@ ul {
 }
 
 @media (min-width: 768px) {
+  .small-text {
+    font-size: 1.35rem !important;
+  }
 }
 
 @media (min-width: 992px) {

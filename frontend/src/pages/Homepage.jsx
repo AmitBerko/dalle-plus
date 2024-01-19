@@ -8,12 +8,14 @@ import { io } from 'socket.io-client'
 import toastr from '../toastrConfig'
 import { auth } from '../firebaseConfig'
 import { signOut } from 'firebase/auth'
+import { v4 as uuid } from 'uuid'
+import ResultsHistoryModal from '../components/ResultsHistoryModal'
 
 // Testing backend url
-// const backendUrl = 'http://localhost:8080'
+const backendUrl = 'http://localhost:8080'
 
 // Production backend url
-const backendUrl = 'https://super-dalle3.onrender.com'
+// const backendUrl = 'https://super-dalle3.onrender.com'
 
 const socket = io(backendUrl)
 
@@ -21,20 +23,23 @@ function Homepage({ userData }) {
 	// States
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
+	const [lastPrompt, setLastPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
 	const [isSlowMode, setIsSlowMode] = useState(false)
 	const [isGenerating, setIsGenerating] = useState(false)
+	const [resultsHistory, setResultsHistory] = useState([])
 
 	// Redux state
 	const accounts = useSelector((state) => state.accounts.value)
 	const dispatch = useDispatch()
-  
+
 	// User uid
 	const userUid = auth.currentUser.uid
 
 	// Firebase db refs
 	const accountsRef = ref(db, `users/${userUid}/accounts`)
 	const imagesRef = ref(db, `users/${userUid}/generatedImages`)
+	const resultsHistoryRef = ref(db, `users/${userUid}/resultsHistory`)
 
 	// Bootstrap tooltips initialization
 	useEffect(() => {
@@ -73,9 +78,15 @@ function Homepage({ userData }) {
 			dispatch(setAccounts(data))
 		})
 
+		const historyUnsubscribe = onValue(resultsHistoryRef, async (snapshot) => {
+			const data = await snapshot.val()
+			setResultsHistory(data)
+		})
+
 		return () => {
 			imagesUnsubscribe()
 			accountsUnsubscribe()
+			historyUnsubscribe()
 		}
 	}, [userUid])
 
@@ -100,6 +111,7 @@ function Homepage({ userData }) {
 	}, [socket])
 
 	const handleGenerate = () => {
+		clearImages()
 		if (!prompt || !accounts) return
 		const notGeneratingAccounts = accounts
 			.map((account, originalIndex) => {
@@ -109,7 +121,15 @@ function Homepage({ userData }) {
 			.filter((account) => account !== null)
 
 		// Start generating with all accounts that are not currently generating
-		socket.emit('generateImages', { prompt, accounts: notGeneratingAccounts, isSlowMode, userUid })
+		const id = uuid() // Random id
+		socket.emit('generateImages', {
+			prompt,
+			accounts: notGeneratingAccounts,
+			isSlowMode,
+			userUid,
+			id,
+		})
+		setLastPrompt(prompt)
 	}
 
 	// Clear all visible images
@@ -195,37 +215,29 @@ function Homepage({ userData }) {
 						)}
 					</div>
 				</div>
-				{/* Add account - Big */}
-				<div className="row mt-3 mb-2 d-none d-md-flex">
-					<div className="col">
-						<button className="btn btn-danger d-none w-100 d-md-block" onClick={clearImages}>
-							Clear Images
-						</button>
-					</div>
-					<div className="col">
+
+				{/* Results and accounts buttons */}
+				<div className="row mt-3">
+					<div className="col-12 col-md-6">
 						<button
-							className="btn btn-success d-none w-100 d-md-block"
-							data-bs-target="#accounts-modal"
+							className="btn btn-success w-100"
 							data-bs-toggle="modal"
+							data-bs-target="#accounts-modal"
 						>
 							Browse Accounts
 						</button>
 					</div>
+					<div className="col-12 col-md-6 my-2 my-md-0 order-md-first">
+						<button
+							className="btn btn-danger w-100"
+							data-bs-toggle="modal"
+							data-bs-target="#results-history-modal"
+						>
+							View Results History
+						</button>
+					</div>
 				</div>
-				{/* Add account - Small */}
-				<div className="mt-4 mb-2 d-md-none">
-					<button
-						className="btn btn-success w-100"
-						data-bs-toggle="modal"
-						data-bs-target="#accounts-modal"
-					>
-						Browse Accounts
-					</button>
-				</div>
-				{/* Clear Images - Small */}
-				<button className="btn btn-danger mb-2 col-12 d-md-none" onClick={clearImages}>
-					Clear Images
-				</button>
+
 				{/* Accounts / images / Checkbox */}
 				<div
 					className="d-flex flex-column justify-content-center
@@ -263,7 +275,6 @@ function Homepage({ userData }) {
 					</div>
 				</div>
 			</section>
-
 			{/* Result images section */}
 			<section>
 				<div className="container-fluid px-2 px-md-5">
@@ -282,6 +293,7 @@ function Homepage({ userData }) {
 				</div>
 			</section>
 			<AccountsModal userUid={userUid} />
+			<ResultsHistoryModal resultsHistory={resultsHistory} />
 		</>
 	)
 }
