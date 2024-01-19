@@ -19,8 +19,8 @@ function ResultsHistoryModal({ resultsHistory }) {
 							<button className="btn-close" data-bs-dismiss="modal"></button>
 						</div>
 
-						<div className="modal-body px-1 px-sm-3 mb-1">
-							<div className="row d-flex align-items-center">
+						<div className="modal-body mb-3 px-3">
+							<div className="row align-items-center">
 								<div className="col-6 col-sm-7 ps-3 text-start fs-5">Prompt</div>
 								<div className="col-3 fs-5 text-center px-0">Images Count</div>
 							</div>
