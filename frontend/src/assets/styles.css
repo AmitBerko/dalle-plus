@@ -1,5 +1,9 @@
 @import 'toastr';
 
+body::-webkit-scrollbar {
+  display: none;
+}
+
 .toast {
 	-moz-box-shadow: none !important;
 	-webkit-box-shadow: none !important;
