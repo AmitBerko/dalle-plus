@@ -5,6 +5,10 @@
 				".read": "$uid === auth.uid",
 				".write": "$uid === auth.uid"
 			}
+		},
+		"exportedResults": {
+			".read": true,
+			".write": false
 		}
 	}
 }
