@@ -23,7 +23,6 @@ function Homepage({ userData }) {
 	// States
 	const [urlArray, setUrlArray] = useState([])
 	const [prompt, setPrompt] = useState('')
-	const [lastPrompt, setLastPrompt] = useState('')
 	const [generatingCount, setGeneratingCount] = useState(0)
 	const [isSlowMode, setIsSlowMode] = useState(false)
 	const [isGenerating, setIsGenerating] = useState(false)
@@ -129,7 +128,6 @@ function Homepage({ userData }) {
 			userUid,
 			id,
 		})
-		setLastPrompt(prompt)
 	}
 
 	// Clear all visible images
