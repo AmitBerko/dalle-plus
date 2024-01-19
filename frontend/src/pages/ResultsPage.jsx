@@ -2,6 +2,7 @@ import { ref, get } from 'firebase/database'
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { db } from '../firebaseConfig'
+import Images from '../components/Images'
 
 function ResultsPage() {
 	const { exportId } = useParams()
@@ -70,21 +71,8 @@ function ResultsPage() {
 								></textarea>
 							</div>
 						</div>
-
-						<div className="container-fluid px-2 px-md-5">
-							<div className="row justify-content-center">
-								{images?.map((image, index) => (
-									<img
-										key={index}
-										src={image}
-										alt={image}
-										className="img-fluid generated-image p-1 p-sm-2 m-0"
-										onClick={() => window.open(image, '_blank')}
-										style={{ cursor: 'pointer' }}
-									/>
-								))}
-							</div>
-						</div>
+            
+						<Images urls={images} />
 					</section>
 				) : (
 					// Display loading spinner if data hasn't loaded yet

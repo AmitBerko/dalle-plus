@@ -10,6 +10,7 @@ import { auth } from '../firebaseConfig'
 import { signOut } from 'firebase/auth'
 import { v4 as uuid } from 'uuid'
 import ResultsHistoryModal from '../components/ResultsHistoryModal'
+import Images from '../components/Images'
 
 // Testing backend url
 // const backendUrl = 'http://localhost:8080'
@@ -142,7 +143,7 @@ function Homepage({ userData }) {
 	return (
 		<>
 			{/* Title and prompt section */}
-			<section className="container-fluid p-3 pt-0 p-md-4 pt-md-0 px-lg-5 pb-2 pb-lg-3">
+			<section className="container-fluid p-3 pt-0 p-md-3 pt-md-0 px-lg-5 pb-2">
 				<div className="row mb-3 mb-lg-4 position-relative">
 					<p className="col-12 fs-6 position-absolute mt-3">
 						{userData.name ? `Hello ${userData.name}` : 'Hello'}{' '}
@@ -239,7 +240,7 @@ function Homepage({ userData }) {
 				{/* Accounts / images / Checkbox */}
 				<div
 					className="d-flex flex-column justify-content-center
-          flex-sm-row flex-sm-wrap w-100 align-items-center"
+          flex-sm-row flex-sm-wrap w-100 align-items-center mt-md-2"
 				>
 					<div className="fs-3 text-center me-sm-3 me-lg-4 me-xl-5">
 						Successful images: {urlArray ? urlArray.length : 0}
@@ -274,22 +275,8 @@ function Homepage({ userData }) {
 				</div>
 			</section>
 			{/* Result images section */}
-			<section>
-				<div className="container-fluid px-2 px-md-5">
-					<div className="row justify-content-center">
-						{urlArray?.map((url, index) => (
-							<img
-								key={index}
-								src={url}
-								alt={url}
-								className="img-fluid generated-image p-2 m-0"
-								onClick={() => window.open(url, '_blank')}
-								style={{ cursor: 'pointer' }}
-							/>
-						))}
-					</div>
-				</div>
-			</section>
+      <Images urls={urlArray}/>
+
 			<AccountsModal userUid={userUid} />
 			<ResultsHistoryModal resultsHistory={resultsHistory} />
 		</>
