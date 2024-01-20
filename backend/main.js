@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 // SocketIO
 const io = new Server(server, {
 	cors: {
-		origin: ['http://localhost:3000', 'https://super-dalle-3.web.app'],
+		origin: ['http://localhost:3000', 'https://super-dalle-3.web.app', 'https://dallepl.us'],
 	},
 })
 
