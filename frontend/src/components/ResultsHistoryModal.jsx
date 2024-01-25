@@ -1,9 +1,7 @@
-import React, { useState } from 'react'
+import React from 'react'
 import Result from './Result'
 
 function ResultsHistoryModal({ resultsHistory }) {
-	// const userRef = ref(db, `users/${userUid}`)
-
 	return (
 		<>
 			<div
