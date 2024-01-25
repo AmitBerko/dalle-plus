@@ -36,6 +36,9 @@ function ResultsHistoryModal({ resultsHistory }) {
 								  })
 								: null}
 						</div>
+						<div className="modal-footer justify-content-start">
+							<div className="fs-5">Note: Results pages have a shareable url</div>
+						</div>
 					</div>
 				</div>
 			</div>
