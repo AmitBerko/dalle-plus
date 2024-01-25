@@ -112,7 +112,11 @@ function Homepage({ userData }) {
 
 	const handleGenerate = () => {
 		clearImages()
-		if (!prompt || !accounts) return
+		if (!accounts) {
+			toastr.error('No accounts found', 'Error')
+			return
+		}
+		if (!prompt) return
 		const notGeneratingAccounts = accounts
 			.map((account, originalIndex) => {
 				if (account.isGenerating) return null
@@ -226,15 +230,31 @@ function Homepage({ userData }) {
 							Browse Accounts
 						</button>
 					</div>
-					<div className="col-12 col-md-6 my-2 my-md-0 order-md-first">
-						<button
-							className="btn btn-danger w-100"
-							data-bs-toggle="modal"
-							data-bs-target="#results-history-modal"
-						>
-							View Results History
-						</button>
-					</div>
+					{resultsHistory ? (
+						<div className="col-12 col-md-6 my-2 my-md-0 order-md-first">
+							<button
+								className="btn btn-danger w-100"
+								data-bs-toggle="modal"
+								data-bs-target="#results-history-modal"
+							>
+								View Results History
+							</button>
+						</div>
+					) : (
+						<div className="col-12 col-md-6 my-2 my-md-0 order-md-first">
+							<button
+								className="btn btn-danger w-100"
+								onClick={() =>
+									toastr.error(
+										'No prompts generated yet. Create some images to view your history',
+										'Error'
+									)
+								}
+							>
+								View Results History
+							</button>
+						</div>
+					)}
 				</div>
 
 				{/* Accounts / images / Checkbox */}
@@ -275,7 +295,7 @@ function Homepage({ userData }) {
 				</div>
 			</section>
 			{/* Result images section */}
-      <Images urls={urlArray}/>
+			<Images urls={urlArray} />
 
 			<AccountsModal userUid={userUid} />
 			<ResultsHistoryModal resultsHistory={resultsHistory} />
