@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { db } from '../firebaseConfig'
 import toastr from '../toastrConfig'
 import Images from '../components/Images'
+import JSZip from 'jszip'
 
 function ResultsPage() {
 	const { exportId } = useParams()
@@ -37,14 +38,38 @@ function ResultsPage() {
 		navigate('/')
 	}
 
-  function handleCopy() {
-    navigator.clipboard.writeText(prompt)
-    toastr.success('Prompt has been copied', 'Success')
-  }
+	function handleCopy() {
+		navigator.clipboard.writeText(prompt)
+		toastr.success('Prompt has been copied', 'Success')
+	}
 
-  function handleDownload() {
+	async function handleDownload() {
+    if (!images) return // Just incase
+		const zip = new JSZip()
 
-  }
+    const downloads = images.map(async (imageUrl, index) => {
+      try {
+        const image = await fetch(imageUrl)
+        const imageBlob = await image.blob()
+        zip.file(`image_${index + 1}.jpg`, imageBlob)
+
+      } catch (error) {
+        console.log(`Error downloading the images: `, error)
+      }
+    })
+
+		await Promise.all(downloads)
+
+		const content = await zip.generateAsync({ type: 'blob' })
+		const zipURL = URL.createObjectURL(content)
+
+		const link = document.createElement('a')
+		link.href = zipURL
+		link.download = 'images.zip' // Might change the name later
+		document.body.appendChild(link)
+		link.click()
+		document.body.removeChild(link)
+	}
 
 	return (
 		<>
@@ -84,20 +109,14 @@ function ResultsPage() {
 
 						<div className="row d-flex justify-content-center my-2">
 							<div className="col-12 col-md-6">
-								<button
-									className="btn btn-success w-100 mb-2 mb-md-0"
-                  onClick={handleCopy}
-								>
+								<button className="btn btn-success w-100 mb-2 mb-md-0" onClick={handleCopy}>
 									Copy Prompt
 								</button>
 							</div>
 
 							<div className="col-12 col-md-6 order-md-first">
-								<button
-									className="btn btn-danger w-100"
-                  onClick={handleDownload}
-								>
-									Download All As Zip (still not implemented)
+								<button className="btn btn-danger w-100" onClick={handleDownload}>
+									Download All As Zip
 								</button>
 							</div>
 						</div>
