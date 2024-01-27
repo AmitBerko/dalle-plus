@@ -260,7 +260,7 @@ function Homepage({ userData }) {
 				{/* Accounts / images / Checkbox */}
 				<div
 					className="d-flex flex-column justify-content-center
-          flex-sm-row flex-sm-wrap w-100 align-items-center mb-2 my-md-3"
+          flex-sm-row flex-sm-wrap w-100 align-items-center mb-2 my-md-3 mt-md-2"
 				>
 					<div className="fs-3 text-center me-sm-3 me-lg-4 me-xl-5">
 						Successful images: {urlArray ? urlArray.length : 0}
