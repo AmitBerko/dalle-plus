@@ -1,9 +1,9 @@
 import React from 'react'
 
 function Images({ urls }) {
-  return (
+	return (
 		<section>
-			<div className="container-fluid px-4 px-xl-5">
+			<div className="container-fluid px-0">
 				<div className="row row-cols-2 row-cols-sm-3 row-cols-md-4 row-cols-xl-5 row-cols-xxl-6 justify-content-center">
 					{urls?.map((url, index) => (
 						<div key={index} className="col p-1">

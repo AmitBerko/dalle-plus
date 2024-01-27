@@ -2,6 +2,7 @@ import { ref, get } from 'firebase/database'
 import React, { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { db } from '../firebaseConfig'
+import toastr from '../toastrConfig'
 import Images from '../components/Images'
 
 function ResultsPage() {
@@ -9,7 +10,7 @@ function ResultsPage() {
 	const [images, setImages] = useState([])
 	const [doesExist, setDoesExist] = useState(true)
 	const [prompt, setPrompt] = useState('')
-  const [hasLoaded, setHasLoaded] = useState(false)
+	const [hasLoaded, setHasLoaded] = useState(false)
 	const navigate = useNavigate()
 
 	useEffect(() => {
@@ -22,7 +23,7 @@ function ResultsPage() {
 				const { prompt, urls } = await snapshot.val()
 				setPrompt(prompt)
 				setImages(urls)
-        setHasLoaded(true)
+				setHasLoaded(true)
 			} catch (error) {
 				console.log(`error getting exported images: `, error)
 				setDoesExist(false)
@@ -35,6 +36,15 @@ function ResultsPage() {
 	function goHomepage() {
 		navigate('/')
 	}
+
+  function handleCopy() {
+    navigator.clipboard.writeText(prompt)
+    toastr.success('Prompt has been copied', 'Success')
+  }
+
+  function handleDownload() {
+
+  }
 
 	return (
 		<>
@@ -52,7 +62,7 @@ function ResultsPage() {
 							</h1>
 						</div>
 						<div className="row justify-content-center mt-2">
-							<div className="col-12 col-lg-10 my-2">
+							<div className="col-12 col-lg-12 my-2">
 								<input
 									disabled
 									readOnly
@@ -71,7 +81,27 @@ function ResultsPage() {
 								></textarea>
 							</div>
 						</div>
-            
+
+						<div className="row d-flex justify-content-center my-2">
+							<div className="col-12 col-md-6">
+								<button
+									className="btn btn-success w-100 mb-2 mb-md-0"
+                  onClick={handleCopy}
+								>
+									Copy Prompt
+								</button>
+							</div>
+
+							<div className="col-12 col-md-6 order-md-first">
+								<button
+									className="btn btn-danger w-100"
+                  onClick={handleDownload}
+								>
+									Download All As Zip (still not implemented)
+								</button>
+							</div>
+						</div>
+
 						<Images urls={images} />
 					</section>
 				) : (
