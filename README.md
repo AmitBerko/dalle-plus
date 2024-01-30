@@ -14,5 +14,7 @@ Super Dalle-3 is a tool designed to enhance your image generation capabilities. 
 
 ## Example Usage
 
-https://github.com/AmitBerko/super-dalle3/assets/21219479/cbe3afaf-d903-4275-87b8-493efc218624
+https://github.com/AmitBerko/dalle-plus/assets/21219479/998e7546-4278-47eb-a5d9-c988dbd41b4a
+
+
 
