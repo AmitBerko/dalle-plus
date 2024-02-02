@@ -2,7 +2,7 @@
 
 ## Overview
 
-Dalle Plus is a tool designed to enhance your image generation capabilities. It enables users to utilize multiple accounts simultaneousl and thus improve the generations results.
+Dalle Plus is a tool designed to enhance your image generation capabilities. It allows users to utilize multiple accounts simultaneously and thus improve the generations results.
 
 ## Getting Started
 
