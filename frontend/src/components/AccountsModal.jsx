@@ -56,17 +56,20 @@ function AccountsModal({ userUid }) {
 
 	function getExpiresIn(creationDate) {
 		let expiresIn = expirationLength - (Date.now() - creationDate)
+		let expiresInMinutes = parseInt(expiresIn / (1000 * 60))
+		let expiresInHours = parseInt(expiresIn / (1000 * 60 * 60))
 		let expiresInDays = parseInt(expiresIn / (1000 * 60 * 60 * 24))
 
-		// Either show days or hours
+
+		// Either show days hours or minutes
+
 		if (expiresInDays > 1) {
 			return `${expiresInDays} Days`
-		} else if (expiresInDays > 1) {
-			return `${expiresInDays * 24} Hours`
+		} else if (expiresInHours > 1) {
+			return `${expiresInHours} Hours`
 		} else {
-			return `${expiresInDays * 24 * 60} Minutes`
+			return `${expiresInMinutes} Minutes`
 		}
-		// return expiresInDays > 1 ? `${expiresInDays} Days` : `${expiresInDays / 24} Hours`
 	}
 
 	function handleRemoveAccount(cookie) {
