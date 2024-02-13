@@ -42,30 +42,18 @@ function AccountsModal({ userUid }) {
 		}
 	}
 
-	// function printUser(userUid) {
-	// 	const userQuery = query(userRef)
-
-	// 	onValue(userQuery, (snapshot) => {
-	// 		if (!snapshot.exists) {
-	// 			console.log('snapshot doesnt exist')
-	// 			return
-	// 		}
-	// 		console.log(snapshot.val().accounts)
-	// 	})
-	// }
-
 	function getExpiresIn(creationDate) {
 		let expiresIn = expirationLength - (Date.now() - creationDate)
 		let expiresInMinutes = parseInt(expiresIn / (1000 * 60))
 		let expiresInHours = parseInt(expiresIn / (1000 * 60 * 60))
 		let expiresInDays = parseInt(expiresIn / (1000 * 60 * 60 * 24))
 
-
 		// Either show days hours or minutes
-
 		if (expiresInDays > 1) {
 			return `${expiresInDays} Days`
-		} else if (expiresInHours > 1) {
+		} else if (expiresInDays === 1) {
+      return `2 Days` // Above 24-48 hours will be counted as 2 days
+		} else if (expiresInHours >= 1) {
 			return `${expiresInHours} Hours`
 		} else {
 			return `${expiresInMinutes} Minutes`
@@ -80,7 +68,12 @@ function AccountsModal({ userUid }) {
 
 	return (
 		<>
-			<div className="modal fade p-2 py-5" id="accounts-modal" tabIndex="-1" data-bs-backdrop="static">
+			<div
+				className="modal fade p-2 py-5"
+				id="accounts-modal"
+				tabIndex="-1"
+				data-bs-backdrop="static"
+			>
 				<div className="modal-dialog modal-dialog-scrollable modal-lg">
 					<div className="modal-content">
 						<div className="modal-header">
@@ -95,7 +88,6 @@ function AccountsModal({ userUid }) {
 								<div className="col-2 d-flex justify-content-end p-0">
 									<i
 										className="bi bi-question-circle accounts-info py-1 px-2"
-
 										data-bs-target="#explanation-modal"
 										data-bs-toggle="modal"
 									></i>
@@ -141,7 +133,7 @@ function AccountsModal({ userUid }) {
 					</div>
 				</div>
 			</div>
-      <ExplanationModal /> 
+			<ExplanationModal />
 		</>
 	)
 }
