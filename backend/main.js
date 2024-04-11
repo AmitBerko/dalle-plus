@@ -108,6 +108,14 @@ io.on('connection', (socket) => {
 
 				// Create the images
 				const urls = await bingApi.createImages(prompt, isSlowMode, credits)
+				if (urls.length === 0) {
+					socket.emit('warningToast', {
+						warningMessage: `The results of account "${account.cookie.slice(
+							0,
+							8
+						)}" have been blocked`,
+					})
+				}
 
 				// Update the db with the new images
 				if (!promptResults[prompt]) {
