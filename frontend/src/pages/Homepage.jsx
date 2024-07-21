@@ -16,7 +16,7 @@ import Images from '../components/Images'
 // const backendUrl = 'http://localhost:8080'
 
 // Production backend url
-const backendUrl = 'https://super-dalle3.onrender.com'
+const backendUrl = 'https://dalleplus-backend.onrender.com'
 
 const socket = io(backendUrl)
 
